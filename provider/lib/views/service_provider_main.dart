@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 
-import '../screens/provider_profile_screen.dart';
-
+import 'provider_profile_screen.dart';
 import '../services/auth_service.dart';
 import '../widgets/logout_button.dart';
 import 'home.dart';
