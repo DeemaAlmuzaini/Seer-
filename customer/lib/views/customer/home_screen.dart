@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../theme/app_theme.dart';
-import '../widgets/logout_button.dart';
+import '../../services/auth_service.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/logout_button.dart';
 
 /// صفحة بسيطة بعد تسجيل الدخول — استبدلها بالصفحة الرئيسية الفعلية.
 class HomeScreen extends StatelessWidget {
