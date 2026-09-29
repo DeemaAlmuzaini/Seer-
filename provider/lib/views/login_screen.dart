@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 
 import '../config/app_config.dart';
 import '../services/auth_service.dart';
+import '../theme/app_colors.dart';
 import 'provider_registration_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -74,20 +76,53 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.handyman_outlined, size: 64),
-                const SizedBox(height: 16),
-                const Text(
-                  'تسجيل دخول ${AppConfig.roleLabel}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.blue,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.directions_car_filled_outlined,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'سير لمزودي الخدمة',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+                Text(
+                  'سجّل دخول ${AppConfig.roleLabel}',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'سجّل الدخول لمتابعة طلبات الخدمة الخاصة بك.',
+                  style: TextStyle(fontSize: 12, color: AppColors.secondaryText),
+                ),
+                const SizedBox(height: 24),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textDirection: TextDirection.ltr,
                   decoration: const InputDecoration(
                     labelText: 'البريد الإلكتروني',
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
                   validator: (value) {
@@ -106,6 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   textDirection: TextDirection.ltr,
                   decoration: InputDecoration(
                     labelText: 'كلمة المرور',
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       onPressed: () =>
@@ -148,18 +184,37 @@ class _LoginScreenState extends State<LoginScreen> {
                         )
                       : const Text('تسجيل الدخول'),
                 ),
-                TextButton(
-                  onPressed: _loading
-                      ? null
-                      : () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => ProviderRegistrationScreen(
-                              authService: _authService,
-                            ),
+                const SizedBox(height: 12),
+                Center(
+                  child: RichText(
+                    text: TextSpan(
+                      style: const TextStyle(
+                          color: AppColors.secondaryText, fontSize: 12),
+                      children: [
+                        const TextSpan(text: 'مزود خدمة جديد؟ '),
+                        TextSpan(
+                          text: 'سجّل الآن',
+                          style: const TextStyle(
+                            color: AppColors.blue,
+                            fontWeight: FontWeight.bold,
                           ),
+                          recognizer: (TapGestureRecognizer()
+                            ..onTap = _loading
+                                ? null
+                                : () => Navigator.of(context).push(
+                                      MaterialPageRoute<void>(
+                                        builder: (_) =>
+                                            ProviderRegistrationScreen(
+                                          authService: _authService,
+                                        ),
+                                      ),
+                                    )),
                         ),
-                  child: const Text('إنشاء حساب مزود خدمة'),
+                      ],
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 24),
               ],
             ),
           ),

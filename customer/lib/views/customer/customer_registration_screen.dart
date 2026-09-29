@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -24,7 +25,6 @@ class _CustomerRegistrationScreenState
 
   bool _isLoading = false;
 
-  static const Color navy = Color(0xFF0F1B4C);
 
   @override
   void dispose() {
@@ -107,18 +107,18 @@ class _CustomerRegistrationScreenState
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: Colors.grey.shade50,
+      fillColor: CustomerColors.fieldFill,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: BorderSide(color: CustomerColors.cardBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: BorderSide(color: CustomerColors.cardBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: navy, width: 1.5),
+        borderSide: const BorderSide(color: CustomerColors.darkPanel, width: 1.5),
       ),
     );
   }
@@ -146,7 +146,7 @@ class _CustomerRegistrationScreenState
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: navy,
+              color: CustomerColors.darkPanel,
             ),
           ),
           const SizedBox(height: 16),
@@ -159,9 +159,9 @@ class _CustomerRegistrationScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5FA),
+      backgroundColor: CustomerColors.background,
       appBar: AppBar(
-        backgroundColor: navy,
+        backgroundColor: CustomerColors.darkPanel,
         foregroundColor: Colors.white,
         title: const Text('إنشاء حساب جديد'),
         centerTitle: true,
@@ -266,7 +266,7 @@ class _CustomerRegistrationScreenState
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: navy,
+                    backgroundColor: CustomerColors.darkPanel,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
