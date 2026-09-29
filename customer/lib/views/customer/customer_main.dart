@@ -103,31 +103,40 @@ Widget _selectedPage() {
         centerTitle: true,
 
         // Notification button on the right
-        leadingWidth: 56,
-        leading: Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C63D6),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        const NotificationsPage(),
-                  ),
-                );
-              },
-              icon: const Icon(
-                Icons.notifications_none,
-                color: Colors.white,
-              ),
-            ),
-          ),
+       leadingWidth: 56,
+leading: Padding(
+  padding: const EdgeInsets.only(right: 16),
+  child: Center(
+    child: Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C63D6),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(
+          minWidth: 40,
+          minHeight: 40,
         ),
+        iconSize: 20,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const NotificationsPage(),
+            ),
+          );
+        },
+        icon: const Icon(
+          Icons.notifications_none,
+          color: Colors.white,
+        ),
+      ),
+    ),
+  ),
+),
 
         // Logo in the center
         title: const Text(
