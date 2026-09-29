@@ -67,11 +67,19 @@ class _ServiceProviderMainState extends State<ServiceProviderMain> {
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Container(
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: const Color(0xFF1C63D6),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 40,
+                  minHeight: 40,
+                ),
+                iconSize: 20,
                 onPressed: () {
                   Navigator.push(
                     context,
