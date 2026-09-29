@@ -873,7 +873,7 @@ class _ProviderRegistrationScreenState
                               ),
                             ),
                             const SizedBox(height: 10),
-                            PlateNumberField(AppColors.navy: AppColors.navy, key: _plateFieldKey),
+                            PlateNumberField(navy: AppColors.navy, key: _plateFieldKey),
                             if (_plateError)
                               Padding(
                                 padding: const EdgeInsets.only(top: 6),
