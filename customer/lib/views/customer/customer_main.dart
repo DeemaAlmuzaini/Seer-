@@ -2,8 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
-import '../views/customer/profile_page.dart';
-
+import 'profile_page.dart';
 import 'home.dart';
 import 'notifications.dart';
 import 'orders.dart';
@@ -19,25 +18,26 @@ class CustomerMain extends StatefulWidget {
 class _CustomerMainState extends State<CustomerMain> {
   int selectedIndex = 0;
 
-  Widget _selectedPage() {
-    switch (selectedIndex) {
-      case 0:
-        return const Home();
+Widget _selectedPage() {
+  switch (selectedIndex) {
+    case 0:
+      return const Home();
 
-      case 1:
-        return const TrackingPage();
+    case 1:
+      return const TrackingPage();
 
-      case 2:
-        return const CustomerOrders();
+    case 2:
+      return const CustomerOrders();
 
-      case 3:
-case 3:
+    case 3:
+      return ProfilePage(
+        uid: FirebaseAuth.instance.currentUser!.uid,
+      );
 
-  return ProfilePage(uid: FirebaseAuth.instance.currentUser!.uid,);
-      default:
-        return const Home();
-    }
+    default:
+      return const Home();
   }
+}
 
   Widget _buildCustomerGreeting() {
     final user = FirebaseAuth.instance.currentUser;
@@ -103,7 +103,7 @@ case 3:
         centerTitle: true,
 
         // Notification button on the right
-        leadingWidth: 72,
+        leadingWidth: 56,
         leading: Padding(
           padding: const EdgeInsets.only(right: 16),
           child: Container(
