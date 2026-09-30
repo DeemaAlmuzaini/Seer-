@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 /// Thrown by [AuthService] with a ready-to-display Arabic message.
 class AuthException implements Exception {
@@ -13,10 +15,21 @@ class AuthException implements Exception {
 /// item #69: "Firebase authentication using a verification link via
 /// email" and item #70: "Firebase password reset using link via email").
 class AuthService {
-  AuthService({FirebaseAuth? firebaseAuth})
-    : _auth = firebaseAuth ?? FirebaseAuth.instance;
+  AuthService({FirebaseAuth? firebaseAuth, FirebaseFirestore? firestore})
+    : _auth = firebaseAuth ?? FirebaseAuth.instance,
+      _firestoreOverride = firestore;
 
   final FirebaseAuth _auth;
+
+  // NEW: read lazily so creating an AuthService never touches Firestore.
+  final FirebaseFirestore? _firestoreOverride;
+  FirebaseFirestore get _firestore =>
+      _firestoreOverride ?? FirebaseFirestore.instance;
+
+  /// NEW: true while [logIn] is checking that the account is a customer.
+  /// AuthGate stays on the login screen meanwhile, so a rejected account
+  /// never flashes another screen.
+  static final ValueNotifier<bool> checkingAccount = ValueNotifier(false);
 
   /// The currently signed-in user, or null if signed out.
   User? get currentUser => _auth.currentUser;
@@ -26,6 +39,7 @@ class AuthService {
 
   /// اللوق ان — تسجيل الدخول بالإيميل وكلمة المرور.
   Future<User> logIn({required String email, required String password}) async {
+    checkingAccount.value = true; // NEW
     try {
       final credential = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
@@ -35,9 +49,31 @@ class AuthService {
       if (user == null) {
         throw AuthException('تعذر تسجيل الدخول، حاول مرة أخرى.');
       }
+
+      // NEW: only accounts with a document in `customers` can log in here.
+      // Server read so an offline cache miss isn't mistaken for "not a customer".
+      final DocumentSnapshot<Map<String, dynamic>> doc;
+      try {
+        doc = await _firestore
+            .collection('customers')
+            .doc(user.uid)
+            .get(const GetOptions(source: Source.server));
+      } catch (_) {
+        await _auth.signOut();
+        throw AuthException('تحقق من اتصالك بالإنترنت وحاول مرة أخرى.');
+      }
+      if (!doc.exists) {
+        await _auth.signOut();
+        throw AuthException(
+          'هذا الحساب ليس حساب عميل. إذا كنت مزود خدمة، استخدم تطبيق مزود الخدمة.',
+        );
+      }
+
       return user;
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapError(e.code));
+    } finally {
+      checkingAccount.value = false; // NEW
     }
   }
 

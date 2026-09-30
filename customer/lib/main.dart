@@ -3,6 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'services/auth_service.dart';
 
 import 'firebase_options.dart';
 import 'views/customer/customer_main.dart';
@@ -64,25 +66,155 @@ class AuthGate extends StatefulWidget {
 class _AuthGateState extends State<AuthGate> {
   void _refresh() => setState(() {});
 
+  // Created once so rebuilds don't resubscribe (which would reset the
+  // login screen mid-login).
+  late final Stream<User?> _authChanges =
+      FirebaseAuth.instance.authStateChanges();
+
+  // Cached per user so rebuilds don't open a new Firestore listener.
+  String? _uid;
+  Stream<DocumentSnapshot<Map<String, dynamic>>>? _customerDoc;
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>> _customerDocFor(String uid) {
+    if (_uid != uid) {
+      _uid = uid;
+      _customerDoc = FirebaseFirestore.instance
+          .collection('customers')
+          .doc(uid)
+          .snapshots();
+    }
+    return _customerDoc!;
+  }
+
+  static const _loading = Scaffold(
+    body: Center(child: CircularProgressIndicator()),
+  );
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+    return ValueListenableBuilder<bool>(
+      valueListenable: AuthService.checkingAccount,
+      builder: (context, checking, _) => StreamBuilder<User?>(
+        stream: _authChanges,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return _loading;
+          }
+          final user = snapshot.data;
+          if (user == null) _uid = null;
+
+          // Stay on the login screen while logIn is still checking the
+          // account, so its error message shows there.
+          if (user == null || checking) {
+            return const LoginScreen(role: AppRole.customer);
+          }
+
+          // Restored sessions skip logIn, so check the account here too.
+          // A stream (not a one-time read) because on sign-up the auth
+          // account exists a moment before its customer document is written.
+          return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            stream: _customerDocFor(user.uid),
+            builder: (context, docSnapshot) {
+              if (docSnapshot.hasError) {
+                return const _NotCustomerScreen(
+                  title: 'تعذر التحقق من الحساب',
+                  message: 'تحقق من اتصالك بالإنترنت ثم سجّل الدخول مرة أخرى.',
+                );
+              }
+              final doc = docSnapshot.data;
+              // Wait for the server before deciding the account isn't a customer.
+              if (doc == null || (!doc.exists && doc.metadata.isFromCache)) {
+                return _loading;
+              }
+              if (!doc.exists) {
+                return const _NotCustomerScreen(
+                  title: 'هذا الحساب ليس حساب عميل',
+                  message:
+                      'سجّل الدخول بحساب عميل، أو استخدم تطبيق مزود الخدمة إذا كان حسابك حساب مزود.',
+                );
+              }
+              if (!user.emailVerified) {
+                return EmailVerificationScreen(onVerified: _refresh);
+              }
+              return const CustomerMain();
+            },
           );
-        }
-        final user = snapshot.data;
-        if (user == null) {
-          return const LoginScreen(role: AppRole.customer);
-        }
-        if (!user.emailVerified) {
-          return EmailVerificationScreen(onVerified: _refresh);
-        }
-        return const CustomerMain();
-      },
+        },
+      ),
+    );
+  }
+}
+
+/// Shown when a restored session belongs to an account that can't use
+/// the customer app.
+class _NotCustomerScreen extends StatelessWidget {
+  const _NotCustomerScreen({required this.title, required this.message});
+
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.lock_outline_rounded,
+                      size: 34,
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.6,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 28),
+                SizedBox(
+                  height: 54,
+                  child: ElevatedButton(
+                    onPressed: () => FirebaseAuth.instance.signOut(),
+                    child: const Text(
+                      'تسجيل الخروج',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
