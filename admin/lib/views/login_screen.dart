@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../config/app_config.dart';
 import '../services/auth_service.dart';
+import '../theme/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,6 +11,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  // Below this width the brand panel is hidden and only the form shows.
+  static const _wideBreakpoint = 900.0;
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -60,32 +63,210 @@ class _LoginScreenState extends State<LoginScreen> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    body: SafeArea(
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+  // ---------- UI helpers ----------
+
+  Widget _logo({double size = 48, bool onDark = false}) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: onDark ? Colors.white24 : AppColors.cardBorder,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(11),
+        child: Image.asset(
+          'assets/icon/icon.jpg',
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  Widget _fieldLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AppColors.primaryText,
+        ),
+      ),
+    );
+  }
+
+  Widget _feature(IconData icon, String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.white60, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------- Sections ----------
+
+  /// Navy panel, same color and menu icons as the admin sidebar.
+  Widget _brandPanel() {
+    return Container(
+      color: AppColors.darkPanel,
+      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              _logo(onDark: true),
+              const SizedBox(width: 12),
+              const Text(
+                'سير',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'لوحة الإدارة',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'راجع طلبات مزودي الخدمة، وتابع المستخدمين والشكاوى من مكان واحد.',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(height: 36),
+              _feature(
+                Icons.assignment_outlined,
+                'طلبات التسجيل',
+                'قبول أو رفض طلبات مزودي الخدمة',
+              ),
+              _feature(
+                Icons.people_outline,
+                'المستخدمون',
+                'إدارة حسابات العملاء والمزودين',
+              ),
+              _feature(
+                Icons.report_outlined,
+                'الشكاوى',
+                'متابعة البلاغات والرد عليها',
+              ),
+            ],
+          ),
+          const Text(
+            '© سير',
+            style: TextStyle(color: Colors.white38, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _form({required bool showLogo}) {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.admin_panel_settings_outlined, size: 68),
-                const SizedBox(height: 16),
+                if (showLogo) ...[
+                  Row(
+                    children: [
+                      _logo(),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'سير · لوحة الإدارة',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primaryText,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+                ],
                 const Text(
-                  'تسجيل دخول ${AppConfig.roleLabel}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+                  'تسجيل الدخول',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primaryText,
+                  ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 8),
+                const Text(
+                  'سجّل الدخول بحساب الإدارة للمتابعة.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.secondaryText,
+                  ),
+                ),
+                const SizedBox(height: 36),
+                _fieldLabel('البريد الإلكتروني'),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textDirection: TextDirection.ltr,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.email],
                   decoration: const InputDecoration(
-                    labelText: 'البريد الإلكتروني',
+                    hintText: 'admin@example.com',
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
                   validator: (value) {
@@ -97,13 +278,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
+                _fieldLabel('كلمة المرور'),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   textDirection: TextDirection.ltr,
+                  textInputAction: TextInputAction.done,
+                  autofillHints: const [AutofillHints.password],
+                  // Enter key logs in (handy on web).
+                  onFieldSubmitted: (_) {
+                    if (!_loading) _logIn();
+                  },
                   decoration: InputDecoration(
-                    labelText: 'كلمة المرور',
+                    hintText: '••••••••',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       onPressed: () =>
@@ -125,6 +313,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 4),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: TextButton(
@@ -132,25 +321,53 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text('نسيت كلمة المرور؟'),
                   ),
                 ),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: _loading ? null : _logIn,
-                  child: _loading
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.4,
-                            color: Colors.white,
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 54,
+                  child: ElevatedButton(
+                    onPressed: _loading ? null : _logIn,
+                    child: _loading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'تسجيل الدخول',
+                            style: TextStyle(fontSize: 16),
                           ),
-                        )
-                      : const Text('تسجيل الدخول'),
+                  ),
                 ),
               ],
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final wide = constraints.maxWidth >= _wideBreakpoint;
+              if (!wide) return SafeArea(child: _form(showLogo: true));
+              // RTL: first child sits on the right, same side as the sidebar.
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(width: 420, child: _brandPanel()),
+                  Expanded(child: _form(showLogo: false)),
+                ],
+              );
+            },
+          ),
+        ),
+      );
 }
