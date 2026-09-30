@@ -20,9 +20,15 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  await FirebaseAppCheck.instance.activate(
-    androidProvider: AndroidProvider.debug,
-  );
+  // App Check is not enforced yet. The debug provider fails in release
+  // builds, so never let it stop the app from starting.
+  try {
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: AndroidProvider.debug,
+    );
+  } catch (e) {
+    debugPrint('App Check not activated: $e');
+  }
 
   runApp(const MyApp());
 }
