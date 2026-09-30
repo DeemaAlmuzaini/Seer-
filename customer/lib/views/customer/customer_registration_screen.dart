@@ -1,9 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/app_snackbar.dart';
+import '../../controllers/customer_registration_controller.dart';
+
+// ============================================================
+// Saudi Phone Input Formatter
+// ============================================================
+// - يقبل الأرقام العربية ويحولها تلقائيًا لإنجليزية
+// - أرقام فقط
+// - أول رقم 0 وثاني رقم 5
+// - حد أقصى 10 أرقام (ويقص النص الملصوق الزائد)
+class SaudiPhoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String text =
+        CustomerRegistrationController.normalizeDigits(newValue.text);
+
+    if (text.isEmpty) return const TextEditingValue();
+
+    if (!RegExp(r'^[0-9]+$').hasMatch(text)) return oldValue;
+    if (text[0] != '0') return oldValue;
+    if (text.length >= 2 && text[1] != '5') return oldValue;
+
+    if (text.length > 10) text = text.substring(0, 10);
+
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+}
 
 class CustomerRegistrationScreen extends StatefulWidget {
   const CustomerRegistrationScreen({super.key});
@@ -16,6 +47,8 @@ class CustomerRegistrationScreen extends StatefulWidget {
 class _CustomerRegistrationScreenState
     extends State<CustomerRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
+  final CustomerRegistrationController _controller =
+      CustomerRegistrationController();
 
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
@@ -41,67 +74,37 @@ class _CustomerRegistrationScreenState
   }
 
   Future<void> _submitForm() async {
+    FocusScope.of(context).unfocus();
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
-    try {
-      final UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          );
+    final String? error = await _controller.registerCustomer(
+      firstName: _firstNameController.text,
+      lastName: _lastNameController.text,
+      phone: _phoneController.text,
+      email: _emailController.text,
+      password: _passwordController.text,
+    );
 
-      await userCredential.user!.sendEmailVerification();
+    if (!mounted) return;
+    setState(() => _isLoading = false);
 
-      await FirebaseFirestore.instance
-          .collection('customers')
-          .doc(userCredential.user!.uid)
-          .set({
-            'firstName': _firstNameController.text.trim(),
-            'lastName': _lastNameController.text.trim(),
-            'email': _emailController.text.trim(),
-            'phone': _phoneController.text.trim(),
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-
-      if (!mounted) return;
-
-      showAppMessage(
-        context,
-        'تم إنشاء الحساب! الرجاء التحقق من بريدك الإلكتروني.',
-        isError: false,
-      );
-
-      Navigator.of(context).popUntil((route) => route.isFirst);
-
-    } on FirebaseAuthException catch (e) {
-      String message = 'حدث خطأ ما. الرجاء المحاولة مرة أخرى.';
-      if (e.code == 'email-already-in-use') {
-        message = 'هذا البريد الإلكتروني مسجل مسبقًا.';
-      } else if (e.code == 'weak-password') {
-        message = 'كلمة المرور ضعيفة جدًا.';
-      } else if (e.code == 'invalid-email') {
-        message = 'الرجاء إدخال بريد إلكتروني صحيح.';
-      }
-
-      if (!mounted) return;
-      showAppMessage(context, message);
-    } catch (e) {
-      if (!mounted) return;
-      showAppMessage(context, 'حدث خطأ ما. الرجاء المحاولة مرة أخرى.');
-      
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+    if (error != null) {
+      showAppMessage(context, error);
+      return;
     }
+
+    showAppMessage(
+      context,
+      'تم إنشاء الحساب! الرجاء التحقق من بريدك الإلكتروني.',
+      isError: false,
+    );
+
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   // ---------- UI helpers ----------
@@ -154,6 +157,73 @@ class _CustomerRegistrationScreenState
       icon: Icon(
         obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
         color: CustomerColors.secondaryText,
+      ),
+    );
+  }
+
+  // ---------- Live password requirements ----------
+
+  Widget _passwordRequirement(String text, bool valid) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(
+            valid ? Icons.check_circle : Icons.cancel,
+            size: 18,
+            color: valid ? Colors.green : CustomerColors.secondaryText,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 13,
+              color: valid ? Colors.green : CustomerColors.secondaryText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _passwordRequirements() {
+    final String p = _passwordController.text;
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, right: 4, left: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _passwordRequirement(
+            '8 خانات على الأقل',
+            CustomerRegistrationController.hasMinLength(p),
+          ),
+          _passwordRequirement(
+            'تبدأ بحرف إنجليزي كبير',
+            CustomerRegistrationController.startsWithUppercase(p),
+          ),
+          _passwordRequirement(
+            'تحتوي على رقم',
+            CustomerRegistrationController.hasNumber(p),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------- Live phone requirements ----------
+
+  Widget _phoneRequirements() {
+    final String p = CustomerRegistrationController.normalizeDigits(
+      _phoneController.text,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, right: 4, left: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _passwordRequirement('يبدأ بـ 05', p.startsWith('05')),
+          _passwordRequirement('10 أرقام بالضبط', p.length == 10),
+        ],
       ),
     );
   }
@@ -237,12 +307,8 @@ class _CustomerRegistrationScreenState
                               hint: 'محمد',
                               icon: Icons.person_outline,
                             ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'الرجاء إدخال الاسم الأول';
-                              }
-                              return null;
-                            },
+                            validator:
+                                CustomerRegistrationController.validateFirstName,
                           ),
                         ],
                       ),
@@ -260,12 +326,8 @@ class _CustomerRegistrationScreenState
                               hint: 'العتيبي',
                               icon: Icons.person_outline,
                             ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'الرجاء إدخال اسم العائلة';
-                              }
-                              return null;
-                            },
+                            validator:
+                                CustomerRegistrationController.validateLastName,
                           ),
                         ],
                       ),
@@ -281,20 +343,16 @@ class _CustomerRegistrationScreenState
                   keyboardType: TextInputType.phone,
                   textDirection: TextDirection.ltr,
                   textInputAction: TextInputAction.next,
+                  inputFormatters: [SaudiPhoneInputFormatter()],
+                  maxLength: 10,
+                  onChanged: (_) => setState(() {}),
                   decoration: _fieldDecoration(
                     hint: '05XXXXXXXX',
                     icon: Icons.phone_outlined,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'الرجاء إدخال رقم الجوال';
-                    }
-                    if (value.trim().length < 9) {
-                      return 'الرجاء إدخال رقم جوال صحيح';
-                    }
-                    return null;
-                  },
+                  ).copyWith(counterText: ''),
+                  validator: CustomerRegistrationController.validatePhone,
                 ),
+                _phoneRequirements(),
                 const SizedBox(height: 20),
 
                 // Email
@@ -308,16 +366,7 @@ class _CustomerRegistrationScreenState
                     hint: 'example@email.com',
                     icon: Icons.email_outlined,
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'الرجاء إدخال البريد الإلكتروني';
-                    }
-                    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-                    if (!emailRegex.hasMatch(value.trim())) {
-                      return 'الرجاء إدخال بريد إلكتروني صحيح';
-                    }
-                    return null;
-                  },
+                  validator: CustomerRegistrationController.validateEmail,
                 ),
                 const SizedBox(height: 20),
 
@@ -328,8 +377,9 @@ class _CustomerRegistrationScreenState
                   obscureText: _obscurePassword,
                   textDirection: TextDirection.ltr,
                   textInputAction: TextInputAction.next,
+                  onChanged: (_) => setState(() {}),
                   decoration: _fieldDecoration(
-                    hint: '8 أحرف على الأقل',
+                    hint: 'Example123',
                     icon: Icons.lock_outline,
                     suffix: _eyeToggle(
                       _obscurePassword,
@@ -337,16 +387,9 @@ class _CustomerRegistrationScreenState
                           () => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'الرجاء إدخال كلمة المرور';
-                    }
-                    if (value.length < 8) {
-                      return 'يجب أن تكون كلمة المرور 8 أحرف على الأقل';
-                    }
-                    return null;
-                  },
+                  validator: CustomerRegistrationController.validatePassword,
                 ),
+                _passwordRequirements(),
                 const SizedBox(height: 20),
 
                 // Confirm password
@@ -364,15 +407,11 @@ class _CustomerRegistrationScreenState
                       () => setState(() => _obscureConfirm = !_obscureConfirm),
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'الرجاء تأكيد كلمة المرور';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'كلمتا المرور غير متطابقتين';
-                    }
-                    return null;
-                  },
+                  validator: (value) =>
+                      CustomerRegistrationController.validateConfirmPassword(
+                        value,
+                        _passwordController.text,
+                      ),
                 ),
                 const SizedBox(height: 32),
 
