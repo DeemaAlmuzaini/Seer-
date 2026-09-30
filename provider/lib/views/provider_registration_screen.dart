@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_material_design_icons/flutter_material_design_icons.dart';
+import '../theme/app_colors.dart';
 
 import '../services/auth_service.dart';
 import 'provider_success_screen.dart';
@@ -39,7 +40,6 @@ class _ProviderRegistrationScreenState
 
   bool _isLoading = false;
 
-  static const Color navy = Color(0xFF0F1B4C);
 
   Map<String, dynamic>? _selectedVehicleType;
   String? _selectedBrand;
@@ -168,23 +168,23 @@ class _ProviderRegistrationScreenState
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: Colors.grey.shade50,
+      fillColor: AppColors.fieldFill,
 
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
 
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: BorderSide(color: AppColors.cardBorder),
       ),
 
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: BorderSide(color: AppColors.cardBorder),
       ),
 
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: navy, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.navy, width: 1.5),
       ),
 
       errorBorder: OutlineInputBorder(
@@ -232,7 +232,7 @@ class _ProviderRegistrationScreenState
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: navy,
+                color: AppColors.navy,
               ),
             ),
 
@@ -257,21 +257,21 @@ class _ProviderRegistrationScreenState
           errorText: _vehicleTypeError,
           inputDecorationTheme: InputDecorationTheme(
             filled: true,
-            fillColor: Colors.grey.shade50,
+            fillColor: AppColors.fieldFill,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 15,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(color: AppColors.cardBorder),
             ),
           ),
           dropdownMenuEntries: _vehicleTypesWithIcons.map((type) {
             return DropdownMenuEntry<Map<String, dynamic>>(
               value: type,
               label: type['label'],
-              leadingIcon: Icon(type['icon'], size: 20, color: navy),
+              leadingIcon: Icon(type['icon'], size: 20, color: AppColors.navy),
             );
           }).toList(),
           onSelected: (value) {
@@ -300,14 +300,14 @@ class _ProviderRegistrationScreenState
           errorText: _brandError,
           inputDecorationTheme: InputDecorationTheme(
             filled: true,
-            fillColor: Colors.grey.shade50,
+            fillColor: AppColors.fieldFill,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 15,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(color: AppColors.cardBorder),
             ),
           ),
           dropdownMenuEntries: _vehicleBrands.map((brand) {
@@ -339,14 +339,14 @@ class _ProviderRegistrationScreenState
           errorText: _colorError,
           inputDecorationTheme: InputDecorationTheme(
             filled: true,
-            fillColor: Colors.grey.shade50,
+            fillColor: AppColors.fieldFill,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 15,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(color: AppColors.cardBorder),
             ),
           ),
           dropdownMenuEntries: _vehicleColors.map((color) {
@@ -381,12 +381,12 @@ class _ProviderRegistrationScreenState
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? navy.withValues(alpha: 0.08) : Colors.white,
+            color: isSelected ? AppColors.navy.withValues(alpha: 0.08) : Colors.white,
             borderRadius: BorderRadius.circular(30),
             border: Border.all(
               color: isSelected
-                  ? navy.withValues(alpha: 0.35)
-                  : Colors.grey.shade300,
+                  ? AppColors.navy.withValues(alpha: 0.35)
+                  : AppColors.cardBorder,
               width: 1,
             ),
           ),
@@ -395,7 +395,7 @@ class _ProviderRegistrationScreenState
             style: TextStyle(
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? navy : Colors.grey.shade600,
+              color: isSelected ? AppColors.navy : Colors.grey.shade600,
             ),
           ),
         ),
@@ -560,13 +560,13 @@ class _ProviderRegistrationScreenState
     return PopScope(
       canPop: !_isLoading,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F5FA),
+        backgroundColor: AppColors.background,
 
         resizeToAvoidBottomInset: true,
 
         appBar: AppBar(
           automaticallyImplyLeading: !_isLoading,
-          backgroundColor: navy,
+          backgroundColor: AppColors.navy,
           foregroundColor: Colors.white,
 
           title: const Text('تسجيل مزود خدمة'),
@@ -861,7 +861,7 @@ class _ProviderRegistrationScreenState
                               'رقم اللوحة',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: navy,
+                                color: AppColors.navy,
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -873,7 +873,7 @@ class _ProviderRegistrationScreenState
                               ),
                             ),
                             const SizedBox(height: 10),
-                            PlateNumberField(navy: navy, key: _plateFieldKey),
+                            PlateNumberField(navy: AppColors.navy, key: _plateFieldKey),
                             if (_plateError)
                               Padding(
                                 padding: const EdgeInsets.only(top: 6),
@@ -935,7 +935,7 @@ class _ProviderRegistrationScreenState
                                     categoryLabel,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: navy,
+                                      color: AppColors.navy,
                                       fontSize: 14,
                                     ),
                                   ),
@@ -987,7 +987,7 @@ class _ProviderRegistrationScreenState
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _submitForm,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: navy,
+                              backgroundColor: AppColors.navy,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
