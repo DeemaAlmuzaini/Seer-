@@ -1,12 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_material_design_icons/flutter_material_design_icons.dart';
 import '../theme/app_colors.dart';
 
 import '../services/auth_service.dart';
+import '../controllers/provider_registration_controller.dart';
 import 'provider_success_screen.dart';
 import '../widgets/plate_number_input.dart';
 import '../widgets/app_snackbar.dart';
+
+// ============================================================
+// Saudi Phone Input Formatter — يقبل أرقام عربي/إنجليزي، يحولها
+// لإنجليزية، يفرض 05 بالبداية، وحد أقصى 10 أرقام.
+// ============================================================
+class ProviderSaudiPhoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String text = ProviderRegistrationController.normalizeDigits(newValue.text);
+
+    if (text.isEmpty) return const TextEditingValue();
+
+    if (!RegExp(r'^[0-9]+$').hasMatch(text)) return oldValue;
+    if (text[0] != '0') return oldValue;
+    if (text.length >= 2 && text[1] != '5') return oldValue;
+
+    if (text.length > 10) text = text.substring(0, 10);
+
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+}
 
 class ProviderRegistrationScreen extends StatefulWidget {
   const ProviderRegistrationScreen({super.key, this.authService});
@@ -245,6 +274,86 @@ class _ProviderRegistrationScreenState
       icon: Icon(
         obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
         color: AppColors.secondaryText,
+      ),
+    );
+  }
+
+  // ---------- Live requirement checklist (password / phone / id) ----------
+
+  Widget _requirementRow(String text, bool valid) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        children: [
+          Icon(
+            valid ? Icons.check_circle : Icons.cancel,
+            size: 16,
+            color: valid ? Colors.green : AppColors.secondaryText,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 12,
+              color: valid ? Colors.green : AppColors.secondaryText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _passwordRequirements() {
+    final String p = _passwordController.text;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, right: 4, left: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _requirementRow(
+            '8 خانات على الأقل',
+            ProviderRegistrationController.hasMinLength(p),
+          ),
+          _requirementRow(
+            'تبدأ بحرف إنجليزي كبير',
+            ProviderRegistrationController.startsWithUppercase(p),
+          ),
+          _requirementRow(
+            'تحتوي على رقم',
+            ProviderRegistrationController.hasNumber(p),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _phoneRequirements() {
+    final String p = ProviderRegistrationController.normalizeDigits(
+      _phoneController.text,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, right: 4, left: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _requirementRow('يبدأ بـ 05', p.startsWith('05')),
+          _requirementRow('10 خانات فقط', p.length == 10),
+        ],
+      ),
+    );
+  }
+
+  Widget _nationalIdRequirements() {
+    final String v = ProviderRegistrationController.normalizeDigits(
+      _nationalIdController.text,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, right: 4, left: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _requirementRow('10 خانات فقط', v.length == 10),
+        ],
       ),
     );
   }
@@ -558,8 +667,12 @@ class _ProviderRegistrationScreenState
           'firstName': _firstNameController.text.trim(),
           'lastName': _lastNameController.text.trim(),
           'email': _emailController.text.trim(),
-          'phone': _phoneController.text.trim(),
-          'nationalId': _nationalIdController.text.trim(),
+          'phone': ProviderRegistrationController.normalizeDigits(
+            _phoneController.text.trim(),
+          ),
+          'nationalId': ProviderRegistrationController.normalizeDigits(
+            _nationalIdController.text.trim(),
+          ),
 
           'vehicleType': vehicleType,
           'vehicleBrand': brand,
@@ -742,14 +855,15 @@ class _ProviderRegistrationScreenState
               icon: Icons.badge_outlined,
             ),
             textInputAction: TextInputAction.next,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'الرجاء إدخال رقم الهوية أو الإقامة';
-              }
-              return null;
-            },
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(10),
+            ],
+            onChanged: (_) => setState(() {}),
+            validator: ProviderRegistrationController.validateNationalId,
           ),
         ),
+        _nationalIdRequirements(),
         const SizedBox(height: 16),
         _labeled(
           'رقم الجوال',
@@ -762,17 +876,12 @@ class _ProviderRegistrationScreenState
               icon: Icons.phone_outlined,
             ),
             textInputAction: TextInputAction.next,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'الرجاء إدخال رقم الجوال';
-              }
-              if (value.trim().length < 9) {
-                return 'الرجاء إدخال رقم جوال صحيح';
-              }
-              return null;
-            },
+            inputFormatters: [ProviderSaudiPhoneInputFormatter()],
+            onChanged: (_) => setState(() {}),
+            validator: ProviderRegistrationController.validatePhone,
           ),
         ),
+        _phoneRequirements(),
         const SizedBox(height: 16),
         _labeled(
           'البريد الإلكتروني',
@@ -805,7 +914,7 @@ class _ProviderRegistrationScreenState
             obscureText: _obscurePassword,
             textDirection: TextDirection.ltr,
             decoration: _fieldDecoration(
-              '8 أحرف على الأقل',
+              'Example123',
               icon: Icons.lock_outline,
               suffix: _eyeToggle(
                 _obscurePassword,
@@ -813,17 +922,11 @@ class _ProviderRegistrationScreenState
               ),
             ),
             textInputAction: TextInputAction.next,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'الرجاء إدخال كلمة المرور';
-              }
-              if (value.length < 8) {
-                return 'يجب أن تكون كلمة المرور 8 أحرف على الأقل';
-              }
-              return null;
-            },
+            onChanged: (_) => setState(() {}),
+            validator: ProviderRegistrationController.validatePassword,
           ),
         ),
+        _passwordRequirements(),
         const SizedBox(height: 16),
         _labeled(
           'تأكيد كلمة المرور',
@@ -840,15 +943,8 @@ class _ProviderRegistrationScreenState
               ),
             ),
             textInputAction: TextInputAction.done,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'الرجاء تأكيد كلمة المرور';
-              }
-              if (value != _passwordController.text) {
-                return 'كلمتا المرور غير متطابقتين';
-              }
-              return null;
-            },
+            validator: (value) => ProviderRegistrationController
+                .validateConfirmPassword(value, _passwordController.text),
           ),
         ),
       ],
@@ -981,11 +1077,14 @@ class _ProviderRegistrationScreenState
           'رقم الرخصة / التصريح',
           TextFormField(
             controller: _licenseNumberController,
+            keyboardType: TextInputType.number,
+            textDirection: TextDirection.ltr,
             decoration: _fieldDecoration(
               'أدخل رقم الرخصة أو التصريح',
               icon: Icons.assignment_outlined,
             ),
             textInputAction: TextInputAction.done,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return 'الرجاء إدخال رقم الرخصة أو التصريح';
