@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../controllers/order_draft_controller.dart';
-import '../../core/app_colors.dart';
+import '../../theme/app_colors.dart'; 
 import '../../models/pricing_model.dart';
 import '../../models/service_catalog.dart';
 import '../../widgets/vehicle_picker_sheet.dart';
@@ -106,10 +106,10 @@ class _RequestServicePageState extends State<RequestServicePage> {
     final category = _controller.category;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: CustomerColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.navy,
-        foregroundColor: AppColors.headerText,
+        backgroundColor: CustomerColors.darkPanel,
+        foregroundColor: Colors.white,
         title: Text(
           category?.label ?? 'طلب خدمة',
           style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
@@ -121,7 +121,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
           builder: (context, _) {
             if (_controller.isLoadingVehicles) {
               return const Center(
-                child: CircularProgressIndicator(color: AppColors.accent),
+                child: CircularProgressIndicator(color: CustomerColors.accent),
               );
             }
             if (_controller.vehiclesError != null) {
@@ -208,20 +208,20 @@ class _RequestServicePageState extends State<RequestServicePage> {
                 maxLines: 3,
                 maxLength: 200,
                 textInputAction: TextInputAction.done,
-                style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
+                style: const TextStyle(fontSize: 15, color: CustomerColors.primaryText),
                 decoration: InputDecoration(
                   hintText: 'مثال: السيارة في الدور الثاني من المواقف',
                   hintStyle: const TextStyle(color: Color(0xFF9AA1B0), fontSize: 14),
                   filled: true,
-                  fillColor: AppColors.cardFill,
+                  fillColor: CustomerColors.fieldFill,
                   contentPadding: const EdgeInsets.all(14),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.cardBorder),
+                    borderSide: const BorderSide(color: CustomerColors.cardBorder),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+                    borderSide: const BorderSide(color: CustomerColors.accent, width: 1.5),
                   ),
                 ),
               ),
@@ -243,7 +243,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: CustomerColors.primaryText,
                         ),
                       ),
                       const Spacer(),
@@ -252,7 +252,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
                         style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.accent,
+                          color: CustomerColors.accent,
                         ),
                       ),
                     ],
@@ -264,7 +264,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
                         alignment: Alignment.centerRight,
                         child: Text(
                           'يُضاف رسم المسافة بعد تحديد الموقع',
-                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          style: TextStyle(fontSize: 12, color: CustomerColors.secondaryText),
                         ),
                       ),
                     ),
@@ -273,7 +273,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
                 FilledButton(
                   onPressed: _continue,
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.accent,
+                    backgroundColor: CustomerColors.accent,
                     minimumSize: const Size.fromHeight(52),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -310,7 +310,7 @@ class _SectionTitle extends StatelessWidget {
         style: const TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w800,
-          color: AppColors.textPrimary,
+          color: CustomerColors.primaryText,
         ),
       ),
     );
@@ -333,11 +333,12 @@ class _OptionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? const Color(0xFFEAF1FC) : AppColors.cardFill,
+      color: selected ? const Color(0xFFEAF1FC) : CustomerColors.fieldFill,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         side: BorderSide(
-          color: selected ? AppColors.accent : AppColors.cardBorder,
+          color: selected ? CustomerColors.accent : CustomerColors.cardBorder
+          ,
           width: selected ? 1.5 : 1,
         ),
         borderRadius: BorderRadius.circular(14),
@@ -350,7 +351,7 @@ class _OptionCard extends StatelessWidget {
             children: [
               Icon(
                 selected ? Icons.radio_button_checked : Icons.radio_button_off,
-                color: selected ? AppColors.accent : AppColors.chevron,
+                color: selected ? CustomerColors.accent : CustomerColors.secondaryText,
                 size: 22,
               ),
               const SizedBox(width: 12),
@@ -360,7 +361,7 @@ class _OptionCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    color: AppColors.textPrimary,
+                    color: CustomerColors.primaryText,
                   ),
                 ),
               ),
@@ -370,7 +371,7 @@ class _OptionCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: selected ? AppColors.accent : AppColors.textSecondary,
+                  color: selected ? CustomerColors.accent : CustomerColors.secondaryText,
                 ),
               ),
             ],
@@ -401,8 +402,8 @@ class _Row extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.cardFill,
-        border: Border.all(color: AppColors.cardBorder),
+        color: CustomerColors.fieldFill,
+        border: Border.all(color: CustomerColors.cardBorder),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -411,7 +412,7 @@ class _Row extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.navy,
+              color: CustomerColors.darkPanel,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: Colors.white, size: 20),
@@ -428,14 +429,14 @@ class _Row extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: CustomerColors.primaryText,
                   ),
                 ),
                 if (subtitle.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: const TextStyle(fontSize: 12, color: CustomerColors.secondaryText),
                   ),
                 ],
               ],
@@ -444,7 +445,7 @@ class _Row extends StatelessWidget {
           if (actionLabel != null)
             TextButton(
               onPressed: onAction,
-              style: TextButton.styleFrom(foregroundColor: AppColors.accent),
+              style: TextButton.styleFrom(foregroundColor: CustomerColors.accent),
               child: Text(
                 actionLabel!,
                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
@@ -473,13 +474,13 @@ class _PlaceholderRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.background,
-        border: Border.all(color: AppColors.cardBorder, style: BorderStyle.solid),
+        color: CustomerColors.background,
+        border: Border.all(color: CustomerColors.cardBorder, style: BorderStyle.solid),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.chevron, size: 22),
+          Icon(icon, color: CustomerColors.secondaryText, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -490,13 +491,13 @@ class _PlaceholderRow extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
+                    color: CustomerColors.secondaryText,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: const TextStyle(fontSize: 12, color: AppColors.chevron),
+                  style: const TextStyle(fontSize: 12, color: CustomerColors.secondaryText),
                 ),
               ],
             ),
@@ -534,10 +535,10 @@ class _Message extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.cardFill,
+                color: CustomerColors.fieldFill,
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: Icon(icon, size: 30, color: AppColors.textSecondary),
+              child: Icon(icon, size: 30, color: CustomerColors.secondaryText),
             ),
             const SizedBox(height: 16),
             Text(
@@ -545,20 +546,20 @@ class _Message extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+                color: CustomerColors.primaryText,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               body,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              style: const TextStyle(fontSize: 14, color: CustomerColors.secondaryText),
             ),
             const SizedBox(height: 20),
             FilledButton(
               onPressed: onPressed,
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.accent,
+                backgroundColor: CustomerColors.accent,
                 minimumSize: const Size(180, 48),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),

@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
+import '../../theme/app_colors.dart'; 
 import '../../models/service_catalog.dart';
 import 'request_service_page.dart';
 
 /// VIEW: the customer home page.
-/// Shows the AI assistant card (#11, not built yet) and the services menu
-/// (#12). Tapping a service opens the request page, where the customer picks
-/// the service option (#13) and the vehicle (#14).
 class Home extends StatelessWidget {
   const Home({super.key, required this.uid});
 
@@ -33,7 +30,7 @@ class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: AppColors.background,
+      color: CustomerColors.background,
       child: ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [
@@ -42,10 +39,11 @@ class Home extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(16, 18, 16, 12),
             child: Text(
               'اطلب خدمة',
+              textAlign: TextAlign.right,
               style: TextStyle(
                 fontSize: 19,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+                color: CustomerColors.primaryText,
               ),
             ),
           ),
@@ -55,14 +53,13 @@ class Home extends StatelessWidget {
     );
   }
 
-  /// The AI assistant card (#11), as written in the original home page.
-  /// The AI assistant card (#11), as written in the original home page.
+  /// The AI assistant card (#11)
   Widget _aiCard() {
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.navy,
+        color: CustomerColors.darkPanel,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -83,13 +80,16 @@ class Home extends StatelessWidget {
             'صف المشكلة لمساعد Seer الذكي',
             textAlign: TextAlign.right,
             textDirection: TextDirection.rtl,
-            style: TextStyle(color: AppColors.cardBorder, fontSize: 15),
+            style: TextStyle(
+              color: CustomerColors.cardBorder,
+              fontSize: 15,
+            ),
           ),
           const SizedBox(height: 18),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.textSecondary),
+              border: Border.all(color: CustomerColors.secondaryText),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -100,11 +100,11 @@ class Home extends StatelessWidget {
                     'صف المشكلة...',
                     textAlign: TextAlign.right,
                     textDirection: TextDirection.rtl,
-                    style: TextStyle(color: AppColors.cardBorder),
+                    style: TextStyle(color: CustomerColors.cardBorder),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: AppColors.accent),
+                  icon: const Icon(Icons.arrow_back, color: CustomerColors.accent),
                   onPressed: () {
                     // Later: open the AI page (#11)
                   },
@@ -116,7 +116,8 @@ class Home extends StatelessWidget {
       ),
     );
   }
-  /// The services menu (#12).
+
+  /// The services menu (#12)
   Widget _servicesGrid(BuildContext context) {
     return GridView.builder(
       shrinkWrap: true,
@@ -133,10 +134,10 @@ class Home extends StatelessWidget {
         final category = ServiceCatalog.categories[index];
 
         return Material(
-          color: AppColors.cardFill,
+          color: CustomerColors.fieldFill,
           clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
-            side: const BorderSide(color: AppColors.cardBorder),
+            side: const BorderSide(color: CustomerColors.cardBorder),
             borderRadius: BorderRadius.circular(16),
           ),
           child: InkWell(
@@ -147,7 +148,7 @@ class Home extends StatelessWidget {
                 Icon(
                   _icons[category.id] ?? Icons.build_outlined,
                   size: 36,
-                  color: AppColors.accent,
+                  color: CustomerColors.accent,
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -155,7 +156,7 @@ class Home extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: CustomerColors.primaryText,
                   ),
                 ),
               ],

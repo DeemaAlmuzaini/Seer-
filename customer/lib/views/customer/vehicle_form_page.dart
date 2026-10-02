@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../controllers/vehicle_controller.dart';
-import '../../core/app_colors.dart';
+import '../../theme/app_colors.dart'; 
 import '../../models/lookup_model.dart';
 import '../../models/vehicle.dart';
 import '../../widgets/plate_number_field.dart';
@@ -160,7 +160,7 @@ class _VehicleFormPageState extends State<VehicleFormPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(foregroundColor: AppStatusColors.error),
             child: const Text('حذف المركبة'),
           ),
         ],
@@ -186,10 +186,10 @@ class _VehicleFormPageState extends State<VehicleFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: CustomerColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.navy,
-        foregroundColor: AppColors.headerText,
+        backgroundColor:CustomerColors.darkPanel,
+        foregroundColor: Colors.white,
         title: Text(
           _isEdit ? 'تعديل المركبة' : 'إضافة مركبة',
           style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
@@ -201,7 +201,7 @@ class _VehicleFormPageState extends State<VehicleFormPage> {
           builder: (context, _) {
             if (_controller.isLoadingLookups) {
               return const Center(
-                child: CircularProgressIndicator(color: AppColors.accent),
+                child: CircularProgressIndicator(color: CustomerColors.accent),
               );
             }
             return Form(key: _formKey, child: _fields());
@@ -317,13 +317,13 @@ class _VehicleFormPageState extends State<VehicleFormPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(
-              color: _plateError == null ? AppColors.cardBorder : AppColors.danger,
+              color: _plateError == null ? CustomerColors.cardBorder : AppStatusColors.error,
             ),
             borderRadius: BorderRadius.circular(12),
           ),
           child: PlateNumberField(
             key: _plateKey,
-            navy: AppColors.navy,
+            navy: CustomerColors.darkPanel,
             initialDigits: _initialPlate.$1,
             initialArabicLetters: _initialPlate.$2,
             // Clears the error as soon as the customer fixes it.
@@ -345,8 +345,8 @@ class _VehicleFormPageState extends State<VehicleFormPage> {
         FilledButton(
           onPressed: saving ? null : _save,
           style: FilledButton.styleFrom(
-            backgroundColor: AppColors.accent,
-            disabledBackgroundColor: AppColors.accentDisabled,
+            backgroundColor: CustomerColors.accent,
+            disabledBackgroundColor: CustomerColors.accent.withOpacity(0.3),
             minimumSize: const Size.fromHeight(52),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),
@@ -372,7 +372,7 @@ class _VehicleFormPageState extends State<VehicleFormPage> {
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
             ),
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.danger,
+              foregroundColor: AppStatusColors.error,
               minimumSize: const Size.fromHeight(48),
             ),
           ),
@@ -429,7 +429,7 @@ class _VehicleFormPageState extends State<VehicleFormPage> {
   TextStyle _inputStyle(BuildContext context) =>
       Theme.of(context).textTheme.bodyLarge!.copyWith(
             fontSize: 15,
-            color: AppColors.textPrimary,
+            color: CustomerColors.primaryText,
           );
 
   InputDecoration _decoration({String? hint}) {
@@ -443,13 +443,13 @@ class _VehicleFormPageState extends State<VehicleFormPage> {
       hintStyle: const TextStyle(color: Color(0xFF9AA1B0)),
       errorMaxLines: 2,
       filled: true,
-      fillColor: AppColors.cardFill,
+      fillColor: CustomerColors.fieldFill,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      enabledBorder: border(AppColors.cardBorder),
-      disabledBorder: border(AppColors.cardBorder),
-      focusedBorder: border(AppColors.accent, 1.5),
-      errorBorder: border(AppColors.danger),
-      focusedErrorBorder: border(AppColors.danger, 1.5),
+      enabledBorder: border(CustomerColors.cardBorder),
+      disabledBorder: border(CustomerColors.cardBorder),
+      focusedBorder: border(CustomerColors.accent, 1.5),
+      errorBorder: border(AppStatusColors.error),
+      focusedErrorBorder: border(AppStatusColors.error, 1.5),
     );
   }
 }
@@ -468,7 +468,7 @@ class _FieldLabel extends StatelessWidget {
         style: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary,
+          color: CustomerColors.secondaryText,
         ),
       ),
     );

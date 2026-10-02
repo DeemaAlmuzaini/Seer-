@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../controllers/order_draft_controller.dart';
-import '../../core/app_colors.dart';
+import '../../theme/app_colors.dart'; 
 import '../../models/pricing_model.dart';
 import '../../widgets/vehicle_picker_sheet.dart';
 
@@ -44,10 +44,10 @@ class _OrderReviewPageState extends State<OrderReviewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: CustomerColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.navy,
-        foregroundColor: AppColors.headerText,
+        backgroundColor: CustomerColors.darkPanel,
+        foregroundColor: Colors.white,
         title: const Text(
           'مراجعة الطلب',
           style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
@@ -69,7 +69,7 @@ class _OrderReviewPageState extends State<OrderReviewPage> {
                     children: [
                       const Text(
                         'راجع تفاصيل الطلب قبل إرساله',
-                        style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 14, color: CustomerColors.secondaryText),
                       ),
                       const SizedBox(height: 16),
 
@@ -144,7 +144,7 @@ class _OrderReviewPageState extends State<OrderReviewPage> {
                                 style: const TextStyle(
                                   fontSize: 14,
                                   height: 1.6,
-                                  color: AppColors.textPrimary,
+                                  color: CustomerColors.primaryText,
                                 ),
                               ),
                             ),
@@ -161,8 +161,8 @@ class _OrderReviewPageState extends State<OrderReviewPage> {
                     child: FilledButton(
                       onPressed: sending ? null : _confirm,
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.accent,
-                        disabledBackgroundColor: AppColors.accentDisabled,
+                        backgroundColor: CustomerColors.accent,
+                        disabledBackgroundColor: CustomerColors.accent.withOpacity(0.3),
                         minimumSize: const Size.fromHeight(52),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -211,8 +211,8 @@ class _Card extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
-        color: AppColors.cardFill,
-        border: Border.all(color: AppColors.cardBorder),
+        color: CustomerColors.fieldFill,
+        border: Border.all(color: CustomerColors.cardBorder),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -225,7 +225,7 @@ class _Card extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: CustomerColors.primaryText,
                 ),
               ),
               const Spacer(),
@@ -233,7 +233,7 @@ class _Card extends StatelessWidget {
                 TextButton(
                   onPressed: onAction,
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.accent,
+                    foregroundColor: CustomerColors.accent,
                     minimumSize: const Size(48, 36),
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                   ),
@@ -277,7 +277,7 @@ class _Line extends StatelessWidget {
       decoration: last
           ? null
           : const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.cardBorder)),
+              border: Border(bottom: BorderSide(color: CustomerColors.cardBorder)),
             ),
       child: Row(
         children: [
@@ -286,7 +286,7 @@ class _Line extends StatelessWidget {
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: CustomerColors.primaryText,
             ),
           ),
           const SizedBox(width: 12),
@@ -300,8 +300,8 @@ class _Line extends StatelessWidget {
                 fontSize: emphasised ? 16 : 14,
                 fontWeight: emphasised ? FontWeight.w800 : FontWeight.w400,
                 color: emphasised
-                    ? AppColors.accent
-                    : (muted ? AppColors.chevron : AppColors.textSecondary),
+                    ? CustomerColors.accent
+                    : (muted ? CustomerColors.secondaryText : CustomerColors.secondaryText),
               ),
             ),
           ),

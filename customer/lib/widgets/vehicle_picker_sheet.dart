@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../core/app_colors.dart';
+import '../../theme/app_colors.dart'; 
 import '../models/vehicle.dart';
 
 /// Lets the customer choose which vehicle the request is for (#14).
@@ -14,7 +14,7 @@ Future<Vehicle?> showVehiclePicker({
 }) {
   return showModalBottomSheet<Vehicle>(
     context: context,
-    backgroundColor: AppColors.background,
+    backgroundColor: CustomerColors.background,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
@@ -30,7 +30,7 @@ Future<Vehicle?> showVehiclePicker({
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.cardBorder,
+                  color: CustomerColors.cardBorder,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -42,7 +42,7 @@ Future<Vehicle?> showVehiclePicker({
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: CustomerColors.primaryText,
                 ),
               ),
             ),
@@ -58,11 +58,11 @@ Future<Vehicle?> showVehiclePicker({
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Material(
-                      color: isSelected ? const Color(0xFFEAF1FC) : AppColors.cardFill,
+                      color: isSelected ? const Color(0xFFEAF1FC) : CustomerColors.fieldFill,
                       clipBehavior: Clip.antiAlias,
                       shape: RoundedRectangleBorder(
                         side: BorderSide(
-                          color: isSelected ? AppColors.accent : AppColors.cardBorder,
+                          color: isSelected ? CustomerColors.accent :CustomerColors.cardBorder ,
                           width: isSelected ? 1.5 : 1,
                         ),
                         borderRadius: BorderRadius.circular(14),
@@ -77,7 +77,7 @@ Future<Vehicle?> showVehiclePicker({
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color: AppColors.navy,
+                                  color: CustomerColors.darkPanel,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Icon(
@@ -98,7 +98,7 @@ Future<Vehicle?> showVehiclePicker({
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary,
+                                        color: CustomerColors.primaryText,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
@@ -106,14 +106,14 @@ Future<Vehicle?> showVehiclePicker({
                                       'لوحة ${vehicle.plateNumberArabic}',
                                       style: const TextStyle(
                                         fontSize: 12,
-                                        color: AppColors.textSecondary,
+                                        color: CustomerColors.secondaryText,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
                               if (isSelected)
-                                const Icon(Icons.check_circle, color: AppColors.accent),
+                                const Icon(Icons.check_circle, color: CustomerColors.accent),
                             ],
                           ),
                         ),
