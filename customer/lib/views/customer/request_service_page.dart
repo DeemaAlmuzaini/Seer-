@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../controllers/order_draft_controller.dart';
+import '../../controllers/location_controller.dart';
 import '../../theme/app_colors.dart'; 
 import '../../models/pricing_model.dart';
 import '../../models/service_catalog.dart';
@@ -39,6 +40,15 @@ class _RequestServicePageState extends State<RequestServicePage> {
     categoryId: widget.categoryId,
     preferredVehicleId: widget.preferredVehicleId,
   );
+
+// Handles GPS/map location separately from the order-building controller.
+// This keeps the location logic reusable regardless of the map provider.
+final _locationController = LocationController();
+
+
+
+
+
   final _note = TextEditingController();
 
   @override
@@ -51,11 +61,35 @@ class _RequestServicePageState extends State<RequestServicePage> {
   @override
   void dispose() {
     _note.dispose();
+    _locationController.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   // ---------------- Actions ----------------
+
+/// Gets the customer's current GPS location and saves it
+/// as the pickup location for this specific order draft (#15).
+Future<void> _useCurrentLocation() async {
+  final success = await _locationController.getCurrentLocation();
+
+  if (!mounted) return;
+
+  if (!success) {
+    _showMessage(
+      _locationController.errorMessage ?? 'تعذر تحديد موقعك الحالي',
+    );
+    return;
+  }
+
+  final location = _locationController.pickupLocation;
+
+  if (location != null) {
+    // The LocationController handles GPS.
+    // The OrderDraftController only keeps the result for this order.
+    _controller.setPickupLocation(location);
+  }
+}
 
   Future<void> _changeVehicle() async {
     final picked = await showVehiclePicker(
@@ -186,19 +220,27 @@ class _RequestServicePageState extends State<RequestServicePage> {
 
               // ---- #15 / #16: not built yet ----
               const _SectionTitle('الموقع'),
-              const _PlaceholderRow(
-                icon: Icons.my_location,
-                title: 'موقع المركبة الحالي',
-                body: 'سيتم تحديده بعد إضافة خدمة الخرائط (#15).',
-              ),
-              if (_controller.needsDropoff) ...[
-                const SizedBox(height: 10),
-                const _PlaceholderRow(
-                  icon: Icons.flag_outlined,
-                  title: 'موقع التسليم',
-                  body: 'خاص بخدمة السطحة، وسيتم تحديده لاحقًا (#16).',
-                ),
-              ],
+
+             ListenableBuilder(
+  listenable: _locationController,
+  builder: (context, _) {
+    return _LocationRow(
+      icon: Icons.my_location,
+      title: 'موقع المركبة الحالي',
+      isSelected: _controller.pickupLocation != null,
+      isLoading: _locationController.isLoading,
+      onUseCurrentLocation: _useCurrentLocation,
+    );
+  },
+),
+             if (_controller.needsDropoff) ...[
+  const SizedBox(height: 10),
+
+  _MapLocationRow(
+    title: 'موقع التوصيل',
+    isSelected: _controller.dropoffLocation != null,
+  ),
+],
               const SizedBox(height: 14),
 
               // ---- #23: an optional note ----
@@ -456,6 +498,251 @@ class _Row extends StatelessWidget {
     );
   }
 }
+
+
+/// Reusable location card for selecting a pickup or drop-off location.
+///
+/// The card only displays location state and actions.
+/// GPS and map logic are handled outside this widget.
+class _LocationRow extends StatelessWidget {
+  const _LocationRow({
+    required this.icon,
+    required this.title,
+    required this.isSelected,
+    required this.isLoading,
+    required this.onUseCurrentLocation,
+  });
+
+  final IconData icon;
+  final String title;
+  final bool isSelected;
+  final bool isLoading;
+  final VoidCallback onUseCurrentLocation;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: CustomerColors.fieldFill,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: CustomerColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: CustomerColors.primaryText,
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
+          Text(
+            isSelected
+                ? 'يمكنك تغيير الموقع في أي وقت'
+                : 'حدد موقع المركبة التي تحتاج إلى خدمة',
+            style: const TextStyle(
+              fontSize: 13,
+              color: CustomerColors.secondaryText,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Shows confirmation only; this is intentionally not clickable.
+          if (isSelected) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAF8F0),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFB7E4C7),
+                ),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    color: Color(0xFF16834B),
+                    size: 21,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'تم تحديد الموقع',
+                    style: TextStyle(
+                      color: Color(0xFF16834B),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          Row(
+            children: [
+              // TODO(#15, #16): Open the reusable map-selection page.
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+  foregroundColor: CustomerColors.darkPanel,
+  side: const BorderSide(color: CustomerColors.darkPanel),
+),
+                  onPressed: null,
+                  icon: const Icon(Icons.map_outlined),
+                  label: const Text('اختيار من الخريطة'),
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: FilledButton.icon(
+                 style: FilledButton.styleFrom(
+  backgroundColor: CustomerColors.darkPanel,
+  foregroundColor: Colors.white,
+),
+                  onPressed: isLoading ? null : onUseCurrentLocation,
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 17,
+                          height: 17,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.my_location, size: 19),
+                  label: Text(
+                    isLoading
+                        ? 'جاري التحديد...'
+                        : 'استخدام موقعي الحالي',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+/// Location card used when the location must be selected from the map.
+///
+/// It follows the same visual design as the pickup location card,
+/// but uses one full-width map button.
+class _MapLocationRow extends StatelessWidget {
+  const _MapLocationRow({
+    required this.title,
+    required this.isSelected,
+  });
+
+  final String title;
+  final bool isSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: CustomerColors.fieldFill,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: CustomerColors.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: CustomerColors.primaryText,
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
+          Text(
+            isSelected
+                ? 'يمكنك تغيير الموقع في أي وقت'
+                : 'اختر المكان الذي تريد توصيل المركبة إليه',
+            style: const TextStyle(
+              fontSize: 13,
+              color: CustomerColors.secondaryText,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Confirmation only; this is not a clickable button.
+          if (isSelected) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAF8F0),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFB7E4C7),
+                ),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    color: Color(0xFF16834B),
+                    size: 21,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'تم تحديد الموقع',
+                    style: TextStyle(
+                      color: Color(0xFF16834B),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // TODO(#16): Connect this button to the reusable map-selection
+          // page after the team confirms the map provider.
+          OutlinedButton.icon(
+            onPressed: null,
+            icon: const Icon(Icons.map_outlined, size: 19),
+            label: Text(
+              isSelected
+                  ? 'تغيير الموقع من الخريطة'
+                  : 'اختيار من الخريطة',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+
 
 /// A step that another story will fill in, shown so the flow is clear.
 class _PlaceholderRow extends StatelessWidget {
