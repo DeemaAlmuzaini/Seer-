@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart'; 
+import '../theme/app_colors.dart'; 
 import '../models/vehicle.dart';
 
 /// Lets the customer choose which vehicle the request is for (#14).
