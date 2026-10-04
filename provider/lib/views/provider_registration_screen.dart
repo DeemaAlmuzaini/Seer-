@@ -955,6 +955,32 @@ class _ProviderRegistrationScreenState
                 .validateConfirmPassword(value, _passwordController.text),
           ),
         ),
+        const SizedBox(height: 20),
+
+        // Back to login, shown on the first step only.
+        Center(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(fontSize: 14, color: AppColors.navy),
+              children: [
+                const TextSpan(text: 'لديك حساب؟ '),
+                TextSpan(
+                  text: 'سجّل الدخول',
+                  style: const TextStyle(
+                    color: AppColors.blue,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                    decorationColor: AppColors.blue,
+                  ),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = _isLoading
+                        ? null
+                        : () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
