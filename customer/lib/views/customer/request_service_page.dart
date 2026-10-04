@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../controllers/order_draft_controller.dart';
 import '../../controllers/location_controller.dart';
-import '../../theme/app_colors.dart'; 
+import '../../theme/app_colors.dart';
 import '../../models/pricing_model.dart';
 import '../../models/service_catalog.dart';
 import '../../widgets/vehicle_picker_sheet.dart';
 import 'order_review_page.dart';
 import 'vehicle_form_page.dart';
+import 'location_picker_page.dart';
 
 /// VIEW: build a service request.
 /// Choose the service option (#13), the vehicle (#14) and an optional note
@@ -41,13 +42,9 @@ class _RequestServicePageState extends State<RequestServicePage> {
     preferredVehicleId: widget.preferredVehicleId,
   );
 
-// Handles GPS/map location separately from the order-building controller.
-// This keeps the location logic reusable regardless of the map provider.
-final _locationController = LocationController();
-
-
-
-
+  // Handles GPS/map location separately from the order-building controller.
+  // This keeps the location logic reusable regardless of the map provider.
+  final _locationController = LocationController();
 
   final _note = TextEditingController();
 
@@ -68,28 +65,28 @@ final _locationController = LocationController();
 
   // ---------------- Actions ----------------
 
-/// Gets the customer's current GPS location and saves it
-/// as the pickup location for this specific order draft (#15).
-Future<void> _useCurrentLocation() async {
-  final success = await _locationController.getCurrentLocation();
+  /// Gets the customer's current GPS location and saves it
+  /// as the pickup location for this specific order draft (#15).
+  Future<void> _useCurrentLocation() async {
+    final success = await _locationController.getCurrentLocation();
 
-  if (!mounted) return;
+    if (!mounted) return;
 
-  if (!success) {
-    _showMessage(
-      _locationController.errorMessage ?? 'تعذر تحديد موقعك الحالي',
-    );
-    return;
+    if (!success) {
+      _showMessage(
+        _locationController.errorMessage ?? 'تعذر تحديد موقعك الحالي',
+      );
+      return;
+    }
+
+    final location = _locationController.pickupLocation;
+
+    if (location != null) {
+      // The LocationController handles GPS.
+      // The OrderDraftController only keeps the result for this order.
+      _controller.setPickupLocation(location);
+    }
   }
-
-  final location = _locationController.pickupLocation;
-
-  if (location != null) {
-    // The LocationController handles GPS.
-    // The OrderDraftController only keeps the result for this order.
-    _controller.setPickupLocation(location);
-  }
-}
 
   Future<void> _changeVehicle() async {
     final picked = await showVehiclePicker(
@@ -131,6 +128,24 @@ Future<void> _useCurrentLocation() async {
 
   void _showMessage(String text) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  /// Opens the shared map screen to select the vehicle's pickup location.
+  Future<void> _selectPickupFromMap() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const LocationPickerPage(title: 'تحديد موقع المركبة'),
+      ),
+    );
+  }
+
+  /// Opens the shared map screen to select the towing destination.
+  Future<void> _selectDropoffFromMap() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const LocationPickerPage(title: 'تحديد موقع التوصيل'),
+      ),
+    );
   }
 
   // ---------------- UI ----------------
@@ -212,7 +227,9 @@ Future<void> _useCurrentLocation() async {
               _Row(
                 icon: Icons.directions_car_outlined,
                 title: vehicle?.title ?? '',
-                subtitle: vehicle == null ? '' : 'لوحة ${vehicle.plateNumberArabic}',
+                subtitle: vehicle == null
+                    ? ''
+                    : 'لوحة ${vehicle.plateNumberArabic}',
                 actionLabel: _controller.vehicles.length > 1 ? 'تغيير' : null,
                 onAction: _changeVehicle,
               ),
@@ -221,26 +238,28 @@ Future<void> _useCurrentLocation() async {
               // ---- #15 / #16: not built yet ----
               const _SectionTitle('الموقع'),
 
-             ListenableBuilder(
-  listenable: _locationController,
-  builder: (context, _) {
-    return _LocationRow(
-      icon: Icons.my_location,
-      title: 'موقع المركبة الحالي',
-      isSelected: _controller.pickupLocation != null,
-      isLoading: _locationController.isLoading,
-      onUseCurrentLocation: _useCurrentLocation,
-    );
-  },
-),
-             if (_controller.needsDropoff) ...[
-  const SizedBox(height: 10),
+              ListenableBuilder(
+                listenable: _locationController,
+                builder: (context, _) {
+                  return _LocationRow(
+                    icon: Icons.my_location,
+                    title: 'موقع المركبة الحالي',
+                    isSelected: _controller.pickupLocation != null,
+                    isLoading: _locationController.isLoading,
+                    onUseCurrentLocation: _useCurrentLocation,
+                    onSelectFromMap: _selectPickupFromMap,
+                  );
+                },
+              ),
+              if (_controller.needsDropoff) ...[
+                const SizedBox(height: 10),
 
-  _MapLocationRow(
-    title: 'موقع التوصيل',
-    isSelected: _controller.dropoffLocation != null,
-  ),
-],
+                _MapLocationRow(
+                  title: 'موقع التوصيل',
+                  isSelected: _controller.dropoffLocation != null,
+                  onSelectFromMap: _selectDropoffFromMap,
+                ),
+              ],
               const SizedBox(height: 14),
 
               // ---- #23: an optional note ----
@@ -250,20 +269,31 @@ Future<void> _useCurrentLocation() async {
                 maxLines: 3,
                 maxLength: 200,
                 textInputAction: TextInputAction.done,
-                style: const TextStyle(fontSize: 15, color: CustomerColors.primaryText),
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: CustomerColors.primaryText,
+                ),
                 decoration: InputDecoration(
                   hintText: 'مثال: السيارة في الدور الثاني من المواقف',
-                  hintStyle: const TextStyle(color: Color(0xFF9AA1B0), fontSize: 14),
+                  hintStyle: const TextStyle(
+                    color: Color(0xFF9AA1B0),
+                    fontSize: 14,
+                  ),
                   filled: true,
                   fillColor: CustomerColors.fieldFill,
                   contentPadding: const EdgeInsets.all(14),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: CustomerColors.cardBorder),
+                    borderSide: const BorderSide(
+                      color: CustomerColors.cardBorder,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: CustomerColors.accent, width: 1.5),
+                    borderSide: const BorderSide(
+                      color: CustomerColors.accent,
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -306,7 +336,10 @@ Future<void> _useCurrentLocation() async {
                         alignment: Alignment.centerRight,
                         child: Text(
                           'يُضاف رسم المسافة بعد تحديد الموقع',
-                          style: TextStyle(fontSize: 12, color: CustomerColors.secondaryText),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: CustomerColors.secondaryText,
+                          ),
                         ),
                       ),
                     ),
@@ -379,8 +412,7 @@ class _OptionCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         side: BorderSide(
-          color: selected ? CustomerColors.accent : CustomerColors.cardBorder
-          ,
+          color: selected ? CustomerColors.accent : CustomerColors.cardBorder,
           width: selected ? 1.5 : 1,
         ),
         borderRadius: BorderRadius.circular(14),
@@ -393,7 +425,9 @@ class _OptionCard extends StatelessWidget {
             children: [
               Icon(
                 selected ? Icons.radio_button_checked : Icons.radio_button_off,
-                color: selected ? CustomerColors.accent : CustomerColors.secondaryText,
+                color: selected
+                    ? CustomerColors.accent
+                    : CustomerColors.secondaryText,
                 size: 22,
               ),
               const SizedBox(width: 12),
@@ -413,7 +447,9 @@ class _OptionCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: selected ? CustomerColors.accent : CustomerColors.secondaryText,
+                  color: selected
+                      ? CustomerColors.accent
+                      : CustomerColors.secondaryText,
                 ),
               ),
             ],
@@ -478,7 +514,10 @@ class _Row extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 12, color: CustomerColors.secondaryText),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: CustomerColors.secondaryText,
+                    ),
                   ),
                 ],
               ],
@@ -487,10 +526,15 @@ class _Row extends StatelessWidget {
           if (actionLabel != null)
             TextButton(
               onPressed: onAction,
-              style: TextButton.styleFrom(foregroundColor: CustomerColors.accent),
+              style: TextButton.styleFrom(
+                foregroundColor: CustomerColors.accent,
+              ),
               child: Text(
                 actionLabel!,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
         ],
@@ -498,7 +542,6 @@ class _Row extends StatelessWidget {
     );
   }
 }
-
 
 /// Reusable location card for selecting a pickup or drop-off location.
 ///
@@ -511,6 +554,7 @@ class _LocationRow extends StatelessWidget {
     required this.isSelected,
     required this.isLoading,
     required this.onUseCurrentLocation,
+    required this.onSelectFromMap,
   });
 
   final IconData icon;
@@ -518,7 +562,7 @@ class _LocationRow extends StatelessWidget {
   final bool isSelected;
   final bool isLoading;
   final VoidCallback onUseCurrentLocation;
-
+  final VoidCallback onSelectFromMap;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -557,16 +601,11 @@ class _LocationRow extends StatelessWidget {
           // Shows confirmation only; this is intentionally not clickable.
           if (isSelected) ...[
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: const Color(0xFFEAF8F0),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFFB7E4C7),
-                ),
+                border: Border.all(color: const Color(0xFFB7E4C7)),
               ),
               child: const Row(
                 children: [
@@ -591,14 +630,14 @@ class _LocationRow extends StatelessWidget {
 
           Row(
             children: [
-              // TODO(#15, #16): Open the reusable map-selection page.
+              // Opens the shared map-selection page for the pickup location.
               Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-  foregroundColor: CustomerColors.darkPanel,
-  side: const BorderSide(color: CustomerColors.darkPanel),
-),
-                  onPressed: null,
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: CustomerColors.darkPanel,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: onSelectFromMap,
                   icon: const Icon(Icons.map_outlined),
                   label: const Text('اختيار من الخريطة'),
                 ),
@@ -608,10 +647,10 @@ class _LocationRow extends StatelessWidget {
 
               Expanded(
                 child: FilledButton.icon(
-                 style: FilledButton.styleFrom(
-  backgroundColor: CustomerColors.darkPanel,
-  foregroundColor: Colors.white,
-),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: CustomerColors.darkPanel,
+                    foregroundColor: Colors.white,
+                  ),
                   onPressed: isLoading ? null : onUseCurrentLocation,
                   icon: isLoading
                       ? const SizedBox(
@@ -624,9 +663,7 @@ class _LocationRow extends StatelessWidget {
                         )
                       : const Icon(Icons.my_location, size: 19),
                   label: Text(
-                    isLoading
-                        ? 'جاري التحديد...'
-                        : 'استخدام موقعي الحالي',
+                    isLoading ? 'جاري التحديد...' : 'استخدام موقعي الحالي',
                   ),
                 ),
               ),
@@ -638,8 +675,6 @@ class _LocationRow extends StatelessWidget {
   }
 }
 
-
-
 /// Location card used when the location must be selected from the map.
 ///
 /// It follows the same visual design as the pickup location card,
@@ -648,11 +683,12 @@ class _MapLocationRow extends StatelessWidget {
   const _MapLocationRow({
     required this.title,
     required this.isSelected,
+    required this.onSelectFromMap,
   });
 
   final String title;
   final bool isSelected;
-
+  final VoidCallback onSelectFromMap;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -691,16 +727,11 @@ class _MapLocationRow extends StatelessWidget {
           // Confirmation only; this is not a clickable button.
           if (isSelected) ...[
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: const Color(0xFFEAF8F0),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFFB7E4C7),
-                ),
+                border: Border.all(color: const Color(0xFFB7E4C7)),
               ),
               child: const Row(
                 children: [
@@ -723,70 +754,15 @@ class _MapLocationRow extends StatelessWidget {
             const SizedBox(height: 12),
           ],
 
-          // TODO(#16): Connect this button to the reusable map-selection
-          // page after the team confirms the map provider.
-          OutlinedButton.icon(
-            onPressed: null,
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: CustomerColors.darkPanel,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: onSelectFromMap,
             icon: const Icon(Icons.map_outlined, size: 19),
             label: Text(
-              isSelected
-                  ? 'تغيير الموقع من الخريطة'
-                  : 'اختيار من الخريطة',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-
-
-
-/// A step that another story will fill in, shown so the flow is clear.
-class _PlaceholderRow extends StatelessWidget {
-  const _PlaceholderRow({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
-
-  final IconData icon;
-  final String title;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: CustomerColors.background,
-        border: Border.all(color: CustomerColors.cardBorder, style: BorderStyle.solid),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: CustomerColors.secondaryText, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: CustomerColors.secondaryText,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  body,
-                  style: const TextStyle(fontSize: 12, color: CustomerColors.secondaryText),
-                ),
-              ],
+              isSelected ? 'تغيير الموقع من الخريطة' : 'اختيار من الخريطة',
             ),
           ),
         ],
@@ -840,7 +816,10 @@ class _Message extends StatelessWidget {
             Text(
               body,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: CustomerColors.secondaryText),
+              style: const TextStyle(
+                fontSize: 14,
+                color: CustomerColors.secondaryText,
+              ),
             ),
             const SizedBox(height: 20),
             FilledButton(
@@ -848,11 +827,16 @@ class _Message extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: CustomerColors.accent,
                 minimumSize: const Size(180, 48),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               child: Text(
                 buttonLabel,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
