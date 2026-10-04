@@ -9,6 +9,7 @@ import '../controllers/provider_registration_controller.dart';
 import 'provider_success_screen.dart';
 import '../widgets/plate_number_input.dart';
 import '../widgets/app_snackbar.dart';
+import '../models/lookup_model.dart';
 
 // ============================================================
 // Saudi Phone Input Formatter: accepts Arabic or Western digits, converts
@@ -67,8 +68,7 @@ class _ProviderRegistrationScreenState
   final _confirmPasswordController = TextEditingController();
   final _nationalIdController = TextEditingController();
   final _licenseNumberController = TextEditingController();
-  final _modelController = TextEditingController();
-  final _yearController = TextEditingController();
+  final _otherModelController = TextEditingController();
   final _otherVehicleTypeController = TextEditingController();
   final _otherBrandController = TextEditingController();
   final _otherColorController = TextEditingController();
@@ -98,39 +98,53 @@ class _ProviderRegistrationScreenState
     {'label': 'أخرى', 'icon': MdiIcons.dotsHorizontal},
   ];
 
-  final List<String> _vehicleBrands = [
-    'تويوتا',
-    'هيونداي',
-    'كيا',
-    'نيسان',
-    'فورد',
-    'شيفروليه',
-    'لكزس',
-    'هوندا',
-    'مازدا',
-    'ميتسوبيشي',
-    'إم جي',
-    'جيلي',
-    'شانجان',
-    'بي واي دي',
-    'أخرى',
-  ];
+  // Brands, models and colors come from Firestore (lookup_data/vehicles),
+  // shared with the customer app. The built-in copy is shown until the
+  // document loads, or if it cannot be read.
+  VehicleLookups _lookups = VehicleLookups.fallback();
 
-  final List<String> _vehicleColors = [
-    'أبيض',
-    'أسود',
-    'فضي',
-    'رمادي',
-    'برتقالي',
-    'أحمر',
-    'أزرق',
-    'كحلي',
-    'بني',
-    'ذهبي',
-    'بيج',
-    'أخضر',
-    'أخرى',
-  ];
+  String? _selectedModel;
+  int? _selectedYear;
+  String? _modelError;
+  String? _yearError;
+
+  /// Next year down to 30 years back, newest first. Built from today's
+  /// date, so it never needs editing.
+  static List<int> get _yearOptions {
+    final int thisYear = DateTime.now().year;
+    return [for (int y = thisYear + 1; y >= thisYear - 30; y--) y];
+  }
+
+  /// [options] without any stored "أخرى", with one "أخرى" added at the end.
+  static List<String> _withOther(List<String> options) => [
+        for (final option in options)
+          if (option != kOtherOption) option,
+        kOtherOption,
+      ];
+
+  List<String> get _brandOptions => _withOther(_lookups.brands);
+  List<String> get _colorOptions => _withOther(_lookups.colors);
+
+  /// The models of the chosen brand. Empty until a brand is chosen; a
+  /// typed-in brand has no list, so its model is typed too.
+  List<String> get _modelOptions {
+    final String? brand = _selectedBrand;
+    if (brand == null) return const [];
+    if (brand == kOtherOption) return const [kOtherOption];
+    return _withOther(_lookups.models[brand] ?? const []);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLookups();
+  }
+
+  Future<void> _loadLookups() async {
+    final VehicleLookups lookups = await LookupModel().getVehicleLookups();
+    if (!mounted) return;
+    setState(() => _lookups = lookups);
+  }
 
   // ============================================================
   // Services Offered — nested structure.
@@ -190,8 +204,7 @@ class _ProviderRegistrationScreenState
     _confirmPasswordController.dispose();
     _nationalIdController.dispose();
     _licenseNumberController.dispose();
-    _modelController.dispose();
-    _yearController.dispose();
+    _otherModelController.dispose();
     _otherVehicleTypeController.dispose();
     _otherBrandController.dispose();
     _otherColorController.dispose();
@@ -439,21 +452,29 @@ class _ProviderRegistrationScreenState
     return LayoutBuilder(
       builder: (context, constraints) {
         return DropdownMenu<String>(
+          // Rebuilt when the Firestore lists arrive.
+          key: ObjectKey(_lookups),
           width: constraints.maxWidth,
           initialSelection: _selectedBrand,
           hintText: 'اختر الماركة',
+          menuHeight: 320,
           errorText: _brandError,
           inputDecorationTheme: _dropdownTheme(),
-          dropdownMenuEntries: _vehicleBrands.map((brand) {
+          dropdownMenuEntries: _brandOptions.map((brand) {
             return DropdownMenuEntry<String>(value: brand, label: brand);
           }).toList(),
           onSelected: (value) {
             setState(() {
               _selectedBrand = value;
               _brandError = null;
-              if (value != 'أخرى') {
+              if (value != kOtherOption) {
                 _otherBrandController.clear();
               }
+              // A new brand has its own models, so the model starts over.
+              // A typed-in brand can only have a typed-in model.
+              _selectedModel = value == kOtherOption ? kOtherOption : null;
+              _otherModelController.clear();
+              _modelError = null;
             });
           },
         );
@@ -467,12 +488,14 @@ class _ProviderRegistrationScreenState
     return LayoutBuilder(
       builder: (context, constraints) {
         return DropdownMenu<String>(
+          key: ObjectKey(_lookups),
           width: constraints.maxWidth,
           initialSelection: _selectedColor,
           hintText: 'اختر اللون',
+          menuHeight: 320,
           errorText: _colorError,
           inputDecorationTheme: _dropdownTheme(),
-          dropdownMenuEntries: _vehicleColors.map((color) {
+          dropdownMenuEntries: _colorOptions.map((color) {
             return DropdownMenuEntry<String>(value: color, label: color);
           }).toList(),
           onSelected: (value) {
@@ -482,6 +505,67 @@ class _ProviderRegistrationScreenState
               if (value != 'أخرى') {
                 _otherColorController.clear();
               }
+            });
+          },
+        );
+      },
+    );
+  }
+
+  // Model Dropdown
+
+  Widget _modelDropdown() {
+    final List<String> options = _modelOptions;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return DropdownMenu<String>(
+          // Rebuilt when the brand or the Firestore lists change, so the
+          // list and the selection always belong to the chosen brand.
+          key: ValueKey((_selectedBrand, _lookups)),
+          width: constraints.maxWidth,
+          enabled: options.isNotEmpty,
+          initialSelection: _selectedModel,
+          hintText:
+              _selectedBrand == null ? 'اختر الماركة أولاً' : 'اختر الموديل',
+          menuHeight: 320,
+          errorText: _modelError,
+          inputDecorationTheme: _dropdownTheme(),
+          dropdownMenuEntries: options.map((model) {
+            return DropdownMenuEntry<String>(value: model, label: model);
+          }).toList(),
+          onSelected: (value) {
+            setState(() {
+              _selectedModel = value;
+              _modelError = null;
+              if (value != kOtherOption) {
+                _otherModelController.clear();
+              }
+            });
+          },
+        );
+      },
+    );
+  }
+
+  // Year Dropdown
+
+  Widget _yearDropdown() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return DropdownMenu<int>(
+          width: constraints.maxWidth,
+          initialSelection: _selectedYear,
+          hintText: 'اختر سنة الصنع',
+          errorText: _yearError,
+          inputDecorationTheme: _dropdownTheme(),
+          menuHeight: 320,
+          dropdownMenuEntries: _yearOptions.map((year) {
+            return DropdownMenuEntry<int>(value: year, label: '$year');
+          }).toList(),
+          onSelected: (value) {
+            setState(() {
+              _selectedYear = value;
+              _yearError = null;
             });
           },
         );
@@ -584,6 +668,8 @@ class _ProviderRegistrationScreenState
           : null;
       _brandError = _selectedBrand == null ? 'الرجاء اختيار الماركة' : null;
       _colorError = _selectedColor == null ? 'الرجاء اختيار اللون' : null;
+      _modelError = _selectedModel == null ? 'الرجاء اختيار الموديل' : null;
+      _yearError = _selectedYear == null ? 'الرجاء اختيار سنة الصنع' : null;
     });
 
     final bool formValid = _vehicleFormKey.currentState!.validate();
@@ -591,7 +677,9 @@ class _ProviderRegistrationScreenState
     if (!formValid ||
         _selectedVehicleType == null ||
         _selectedBrand == null ||
-        _selectedColor == null) {
+        _selectedColor == null ||
+        _selectedModel == null ||
+        _selectedYear == null) {
       return false;
     }
 
@@ -665,6 +753,10 @@ class _ProviderRegistrationScreenState
           ? _otherColorController.text.trim()
           : (_selectedColor ?? '');
 
+      final String model = _selectedModel == kOtherOption
+          ? _otherModelController.text.trim()
+          : (_selectedModel ?? '');
+
       final Map<String, dynamic> servicesToSave =
           _buildServicesOfferedPayload();
 
@@ -685,8 +777,8 @@ class _ProviderRegistrationScreenState
           'vehicleType': vehicleType,
           'vehicleBrand': brand,
           'vehicleColor': color,
-          'vehicleModel': _modelController.text.trim(),
-          'vehicleYear': _yearController.text.trim(),
+          'vehicleModel': model,
+          'vehicleYear': '$_selectedYear',
 
           'plateNumberLatin': '${plate.digits} ${plate.englishLetters}',
           'plateNumberArabic': '${plate.digits} ${plate.arabicLetters}',
@@ -1047,49 +1139,26 @@ class _ProviderRegistrationScreenState
           ),
         ],
         const SizedBox(height: 16),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _labeled(
-                'الموديل',
-                TextFormField(
-                  controller: _modelController,
-                  decoration: _fieldDecoration('مثال: كامري'),
-                  textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'الرجاء إدخال الموديل';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _labeled(
-                'السنة',
-                TextFormField(
-                  controller: _yearController,
-                  keyboardType: TextInputType.number,
-                  decoration: _fieldDecoration('مثال: 2023'),
-                  textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'الرجاء إدخال السنة';
-                    }
-                    final year = int.tryParse(value.trim());
-                    if (year == null || value.trim().length != 4) {
-                      return 'الرجاء إدخال سنة صحيحة';
-                    }
-                    return null;
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
+        _fieldLabel('الموديل'),
+        _modelDropdown(),
+        if (_selectedModel == kOtherOption) ...[
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _otherModelController,
+            decoration: _fieldDecoration('حدد الموديل'),
+            textInputAction: TextInputAction.next,
+            validator: (value) {
+              if (_selectedModel == kOtherOption &&
+                  (value == null || value.trim().isEmpty)) {
+                return 'الرجاء تحديد الموديل';
+              }
+              return null;
+            },
+          ),
+        ],
+        const SizedBox(height: 16),
+        _fieldLabel('سنة الصنع'),
+        _yearDropdown(),
         const SizedBox(height: 16),
         _fieldLabel('رقم اللوحة'),
         const Text(
