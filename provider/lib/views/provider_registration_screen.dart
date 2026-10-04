@@ -315,12 +315,20 @@ class _ProviderRegistrationScreenState
             ProviderRegistrationController.hasMinLength(p),
           ),
           _requirementRow(
-            'تبدأ بحرف إنجليزي كبير',
-            ProviderRegistrationController.startsWithUppercase(p),
+            'حرف إنجليزي كبير (A-Z)',
+            ProviderRegistrationController.hasUppercase(p),
           ),
           _requirementRow(
-            'تحتوي على رقم',
+            'حرف إنجليزي صغير (a-z)',
+            ProviderRegistrationController.hasLowercase(p),
+          ),
+          _requirementRow(
+            'رقم واحد على الأقل',
             ProviderRegistrationController.hasNumber(p),
+          ),
+          _requirementRow(
+            'رمز خاص مثل ! @ # \$',
+            ProviderRegistrationController.hasSpecialChar(p),
           ),
         ],
       ),

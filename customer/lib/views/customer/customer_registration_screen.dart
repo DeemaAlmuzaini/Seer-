@@ -198,12 +198,20 @@ class _CustomerRegistrationScreenState
             CustomerRegistrationController.hasMinLength(p),
           ),
           _passwordRequirement(
-            'تبدأ بحرف إنجليزي كبير',
-            CustomerRegistrationController.startsWithUppercase(p),
+            'حرف إنجليزي كبير (A-Z)',
+            CustomerRegistrationController.hasUppercase(p),
           ),
           _passwordRequirement(
-            'تحتوي على رقم',
+            'حرف إنجليزي صغير (a-z)',
+            CustomerRegistrationController.hasLowercase(p),
+          ),
+          _passwordRequirement(
+            'رقم واحد على الأقل',
             CustomerRegistrationController.hasNumber(p),
+          ),
+          _passwordRequirement(
+            'رمز خاص مثل ! @ # \$',
+            CustomerRegistrationController.hasSpecialChar(p),
           ),
         ],
       ),
