@@ -205,7 +205,7 @@ class _AuthGateState extends State<AuthGate> {
                       width: 96,
                       height: 96,
                       decoration: const BoxDecoration(
-                        color: AppColors.navy,
+                        color: AppColors.blue,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(icon, size: 48, color: Colors.white),
