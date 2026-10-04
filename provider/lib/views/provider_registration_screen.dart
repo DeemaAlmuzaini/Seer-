@@ -11,8 +11,8 @@ import '../widgets/plate_number_input.dart';
 import '../widgets/app_snackbar.dart';
 
 // ============================================================
-// Saudi Phone Input Formatter — يقبل أرقام عربي/إنجليزي، يحولها
-// لإنجليزية، يفرض 05 بالبداية، وحد أقصى 10 أرقام.
+// Saudi Phone Input Formatter: accepts Arabic or Western digits, converts
+// them to Western digits, forces a leading 05, and allows at most 10 digits.
 // ============================================================
 class ProviderSaudiPhoneInputFormatter extends TextInputFormatter {
   @override
@@ -135,13 +135,13 @@ class _ProviderRegistrationScreenState
   // ============================================================
   // Services Offered — nested structure.
   //
-  // كل فئة رئيسية لها id ثابت (يُستخدم بالكود وبقاعدة البيانات)
-  // ولها label (النص المعروض للمستخدم)، وتحتها خيارات فرعية،
-  // كل خيار له id ثابت و label معروض.
+  // Each category has a fixed id (used in code and in the database)
+  // and a label (the text shown to the user), with sub-options under it;
+  // each option also has a fixed id and a displayed label.
   //
-  // فصل id عن label يخلي تغيير النص المعروض لاحقًا (ترجمة، تعديل
-  // صياغة...) لا يكسر أي منطق أو بيانات محفوظة سابقًا في Firestore،
-  // لأن الـ id هو المرجع الثابت وليس النص نفسه.
+  // Keeping the id separate from the label means the displayed text can
+  // change later (translation, rewording...) without breaking any logic or
+  // data already saved in Firestore, because the id is the stable reference.
   // ============================================================
 
   final Map<String, Map<String, dynamic>> _serviceCategories = {
@@ -171,10 +171,10 @@ class _ProviderRegistrationScreenState
     },
   };
 
-  // مفاتيح مركّبة بصيغة "categoryId.optionId" (مثال: "battery.activation")
-  // بدل تخزين النص العربي نفسه، عشان:
-  // 1) ما يصير تصادم لو تكرر نفس النص بفئتين مختلفتين.
-  // 2) ثبات المرجع حتى لو تغيّر النص المعروض لاحقًا.
+  // Composite keys in the form "categoryId.optionId" (e.g. "battery.activation")
+  // instead of the Arabic text itself, so that:
+  // 1) the same text in two different categories never collides.
+  // 2) the reference stays stable even if the displayed text changes later.
   final Set<String> _selectedServices = {};
 
   String _optionKey(String categoryId, String optionId) =>
@@ -377,9 +377,9 @@ class _ProviderRegistrationScreenState
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.cardBorder),
       ),
-      // Material(type: MaterialType.transparency) يعطي أقرب Material
-      // ancestor للعناصر التفاعلية (InkWell/CheckboxListTile) داخل
-      // هالكرت، عشان تأثير اللمس (ripple) والخلفية يرسمهم صح.
+      // Material(type: MaterialType.transparency) gives the interactive
+      // widgets in this card (InkWell/CheckboxListTile) a nearby Material
+      // ancestor, so the touch ripple and background are drawn correctly.
       child: Material(
         type: MaterialType.transparency,
         child: Column(
@@ -529,14 +529,14 @@ class _ProviderRegistrationScreenState
   }
 
   // ============================================================
-  // يبني نسخة servicesOffered الجاهزة للحفظ في Firestore، كـ map
-  // متداخل: كل فئة فيها label وقائمة options، كل خيار فيه id و
-  // label و enabled (true إذا كان مختار في الفورم).
+  // Builds the servicesOffered value ready to save in Firestore, as a nested
+  // map: each category has a label and a list of options, and each option
+  // has an id, a label and enabled (true when it was picked in the form).
   //
-  // ملاحظة: يحفظ كل الخيارات (المختارة وغير المختارة) مع enabled
-  // flag، بدل ما يحفظ بس المختارة، عشان يسهل لاحقًا معرفة كل
-  // الخيارات المتاحة لهذا المزود وتفعيل/تعطيل أي وحدة منها بدون
-  // إعادة بناء القائمة كاملة.
+  // Note: it saves every option (picked or not) with an enabled flag,
+  // instead of only the picked ones, so it is easy later to see all the
+  // options for this provider and turn any of them on or off without
+  // rebuilding the whole list.
   // ============================================================
 
   Map<String, dynamic> _buildServicesOfferedPayload() {
@@ -821,7 +821,7 @@ class _ProviderRegistrationScreenState
                 'الاسم الأول',
                 TextFormField(
                   controller: _firstNameController,
-                  decoration: _fieldDecoration('محمد'),
+                  decoration: _fieldDecoration(''),
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -838,7 +838,7 @@ class _ProviderRegistrationScreenState
                 'اسم العائلة',
                 TextFormField(
                   controller: _lastNameController,
-                  decoration: _fieldDecoration('العتيبي'),
+                  decoration: _fieldDecoration(''),
                   textInputAction: TextInputAction.next,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -922,7 +922,7 @@ class _ProviderRegistrationScreenState
             obscureText: _obscurePassword,
             textDirection: TextDirection.ltr,
             decoration: _fieldDecoration(
-              'Example123',
+              '',
               icon: Icons.lock_outline,
               suffix: _eyeToggle(
                 _obscurePassword,
@@ -1092,10 +1092,18 @@ class _ProviderRegistrationScreenState
               icon: Icons.assignment_outlined,
             ),
             textInputAction: TextInputAction.done,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            // License numbers are exactly 10 digits.
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(10),
+            ],
             validator: (value) {
-              if (value == null || value.trim().isEmpty) {
+              final v = value?.trim() ?? '';
+              if (v.isEmpty) {
                 return 'الرجاء إدخال رقم الرخصة أو التصريح';
+              }
+              if (v.length != 10) {
+                return 'رقم الرخصة يجب أن يكون 10 أرقام بالضبط';
               }
               return null;
             },
@@ -1287,6 +1295,8 @@ class _ProviderRegistrationScreenState
                             maintainState: true,
                             child: Form(
                               key: _personalFormKey,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
                               child: _personalStep(),
                             ),
                           ),
@@ -1295,6 +1305,8 @@ class _ProviderRegistrationScreenState
                             maintainState: true,
                             child: Form(
                               key: _vehicleFormKey,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
                               child: _vehicleStep(),
                             ),
                           ),

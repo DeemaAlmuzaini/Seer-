@@ -8,10 +8,10 @@ import '../../controllers/customer_registration_controller.dart';
 // ============================================================
 // Saudi Phone Input Formatter
 // ============================================================
-// - يقبل الأرقام العربية ويحولها تلقائيًا لإنجليزية
-// - أرقام فقط
-// - أول رقم 0 وثاني رقم 5
-// - حد أقصى 10 أرقام (ويقص النص الملصوق الزائد)
+// - Accepts Arabic-Indic digits and converts them to Western digits
+// - Digits only
+// - First digit 0, second digit 5
+// - At most 10 digits (extra pasted text is cut off)
 class SaudiPhoneInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -252,6 +252,9 @@ class _CustomerRegistrationScreenState
         top: false,
         child: Form(
           key: _formKey,
+          // Each field is checked as soon as the user edits it, so a red
+          // error disappears the moment the value becomes valid.
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
             child: Column(
@@ -312,7 +315,7 @@ class _CustomerRegistrationScreenState
                             controller: _firstNameController,
                             textInputAction: TextInputAction.next,
                             decoration: _fieldDecoration(
-                              hint: 'محمد',
+                              hint: '',
                               icon: Icons.person_outline,
                             ),
                             validator:
@@ -331,7 +334,7 @@ class _CustomerRegistrationScreenState
                             controller: _lastNameController,
                             textInputAction: TextInputAction.next,
                             decoration: _fieldDecoration(
-                              hint: 'العتيبي',
+                              hint: '',
                               icon: Icons.person_outline,
                             ),
                             validator:
@@ -387,7 +390,7 @@ class _CustomerRegistrationScreenState
                   textInputAction: TextInputAction.next,
                   onChanged: (_) => setState(() {}),
                   decoration: _fieldDecoration(
-                    hint: 'Example123',
+                    hint: '',
                     icon: Icons.lock_outline,
                     suffix: _eyeToggle(
                       _obscurePassword,
@@ -467,6 +470,8 @@ class _CustomerRegistrationScreenState
                           style: const TextStyle(
                             color: CustomerColors.accent,
                             fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                            decorationColor: CustomerColors.accent,
                           ),
                           recognizer: TapGestureRecognizer()
                             ..onTap = _isLoading
