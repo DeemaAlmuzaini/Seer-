@@ -70,7 +70,9 @@ class CustomerRegistrationController {
         case 'email-already-in-use':
           return 'هذا البريد الإلكتروني مسجل مسبقًا.';
         case 'weak-password':
-          return 'كلمة المرور ضعيفة جدًا.';
+        // Sent when the Firebase password policy is set to "Require".
+        case 'password-does-not-meet-requirements':
+          return 'كلمة المرور لا تستوفي الشروط المطلوبة.';
         case 'invalid-email':
           return 'الرجاء إدخال بريد إلكتروني صحيح.';
         case 'network-request-failed':
