@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -430,18 +431,13 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
 
   // ---------------- Formatting ----------------
 
-  /// The location's address, or its coordinates, or a placeholder while
-  /// the location stories (#15, #16) are not done yet.
-  static String _locationText(Map<String, dynamic>? location) {
+  /// The location as coordinates, or a placeholder when the customer has
+  /// not set one. Locations are saved as GeoPoint (#15, #16).
+  static String _locationText(GeoPoint? location) {
     if (location == null) return 'الموقع غير محدد';
-    final String address = location['address']?.toString().trim() ?? '';
-    if (address.isNotEmpty) return address;
-    final lat = location['lat'];
-    final lng = location['lng'];
-    if (lat is num && lng is num) {
-      return '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}';
-    }
-    return 'الموقع غير محدد';
+    // \u2066 and \u2069 keep the numbers left-to-right on the Arabic screen.
+    return '\u2066${location.latitude.toStringAsFixed(5)}, '
+        '${location.longitude.toStringAsFixed(5)}\u2069';
   }
 
   static String _priceText(num? price) {
