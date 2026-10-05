@@ -1,4 +1,4 @@
-/// CONTROLLER: قواعد التحقق لكلمة المرور، رقم الجوال، ورقم الهوية — مزود الخدمة.
+/// CONTROLLER: validation rules for the provider's password, phone and national ID.
 class ProviderRegistrationController {
   static String? validatePhone(String? value) {
     final String v = normalizeDigits(value?.trim() ?? '');
@@ -21,18 +21,34 @@ class ProviderRegistrationController {
     return null;
   }
 
+  // Password rules. They match the Firebase password policy, so the app and
+  // Firebase accept exactly the same passwords. Used by the validator and by
+  // the live checklist under the password field.
   static bool hasMinLength(String p) => p.length >= 8;
-  static bool startsWithUppercase(String p) => RegExp(r'^[A-Z]').hasMatch(p);
+  static bool hasUppercase(String p) => RegExp(r'[A-Z]').hasMatch(p);
+  static bool hasLowercase(String p) => RegExp(r'[a-z]').hasMatch(p);
   static bool hasNumber(String p) => RegExp(r'[0-9]').hasMatch(p);
+
+  /// Special characters Firebase counts as non-alphanumeric. Kept to this
+  /// list so the app never accepts a character Firebase would reject.
+  static const String specialCharacters = r'^$*.[]{}()?"!@#%&/\,><' "'" r':;|_~`';
+  static bool hasSpecialChar(String p) =>
+      p.split('').any(specialCharacters.contains);
 
   static String? validatePassword(String? value) {
     final String v = value ?? '';
     if (v.isEmpty) return 'الرجاء إدخال كلمة المرور';
     if (!hasMinLength(v)) return 'يجب أن تكون كلمة المرور 8 خانات على الأقل';
-    if (!startsWithUppercase(v)) {
-      return 'يجب أن تبدأ كلمة المرور بحرف إنجليزي كبير';
+    if (!hasUppercase(v)) {
+      return 'يجب أن تحتوي كلمة المرور على حرف إنجليزي كبير';
+    }
+    if (!hasLowercase(v)) {
+      return 'يجب أن تحتوي كلمة المرور على حرف إنجليزي صغير';
     }
     if (!hasNumber(v)) return 'يجب أن تحتوي كلمة المرور على رقم';
+    if (!hasSpecialChar(v)) {
+      return 'يجب أن تحتوي كلمة المرور على رمز خاص مثل ! @ # \$';
+    }
     return null;
   }
 
