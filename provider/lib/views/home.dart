@@ -206,9 +206,9 @@ Future<void> _changeAvailability(bool value) async {
 
               Expanded(
                 child: _buildStatCard(
-                  icon: Icons.check_circle_outline_rounded,
-                  value: '${_stats?.completed ?? 0}',
-                  label: 'طلبات مكتملة',
+                  icon: Icons.payments_outlined,
+                  value: _stats?.earningsText ?? '0',
+                  label: 'صافي الأرباح (ر.س)',
                 ),
               ),
 

@@ -245,14 +245,15 @@ class OrderModel {
     });
   }
 
-  /// Number of orders this provider has completed (#36).
-  Future<int> countCompleted(String providerId) async {
+  /// Net earnings (#36): the total paid on this provider's completed
+  /// orders, added up by Firestore without downloading the orders.
+  Future<double> sumEarnings(String providerId) async {
     final result = await _orders
         .where('providerId', isEqualTo: providerId)
         .where('status', isEqualTo: OrderStatus.completed)
-        .count()
+        .aggregate(sum('finalPrice'))
         .get();
-    return result.count ?? 0;
+    return result.getSum('finalPrice') ?? 0;
   }
 
   /// Number of orders this provider completed today (#36).

@@ -4,10 +4,15 @@ import '../models/order.dart';
 
 /// The numbers shown under "quick statistics" on the home page (#36).
 class ProviderStats {
-  const ProviderStats({required this.completed, required this.completedToday});
+  const ProviderStats({required this.earnings, required this.completedToday});
 
-  /// All orders this provider has completed.
-  final int completed;
+  /// Net earnings: the total paid on all completed orders, in riyals.
+  final double earnings;
+
+  /// Earnings as shown on the card, e.g. "250" or "250.5".
+  String get earningsText => earnings == earnings.roundToDouble()
+      ? earnings.toInt().toString()
+      : earnings.toStringAsFixed(1);
 
   /// Orders this provider completed today.
   final int completedToday;
@@ -29,10 +34,13 @@ class ProviderStatsController {
     if (uid == null) return null;
     try {
       final results = await Future.wait([
-        _model.countCompleted(uid),
+        _model.sumEarnings(uid),
         _model.countCompletedToday(uid),
       ]);
-      return ProviderStats(completed: results[0], completedToday: results[1]);
+      return ProviderStats(
+        earnings: results[0].toDouble(),
+        completedToday: results[1].toInt(),
+      );
     } catch (_) {
       return null;
     }
