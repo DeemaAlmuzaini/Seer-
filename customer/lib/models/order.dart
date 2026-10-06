@@ -86,10 +86,10 @@ class ServiceOrder {
  
   /// TODO(#15): the vehicle's current location, set by the location story.
   /// Expected shape: {'lat': double, 'lng': double, 'address': String}
-  final Map<String, dynamic>? pickupLocation;
+  final GeoPoint? pickupLocation;
  
   /// TODO(#16): the drop-off location, towing only.
-  final Map<String, dynamic>? dropoffLocation;
+  final GeoPoint? dropoffLocation;
  
   /// TODO(#18): filled in when a provider is matched / accepts.
   final String? providerId;
@@ -115,8 +115,8 @@ class ServiceOrder {
       status: (map['status'] ?? OrderStatus.pending) as String,
       createdAt: (map['createdAt'] as Timestamp?)?.toDate(),
       acceptedAt: (map['acceptedAt'] as Timestamp?)?.toDate(),
-      pickupLocation: (map['pickupLocation'] as Map?)?.cast<String, dynamic>(),
-      dropoffLocation: (map['dropoffLocation'] as Map?)?.cast<String, dynamic>(),
+pickupLocation: map['pickupLocation'] as GeoPoint?,
+dropoffLocation: map['dropoffLocation'] as GeoPoint?,
       providerId: map['providerId'] as String?,
     );
   }
