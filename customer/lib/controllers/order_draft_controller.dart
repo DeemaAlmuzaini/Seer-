@@ -53,6 +53,11 @@ class OrderDraftController extends ChangeNotifier {
   String? selectedOptionId;
   Vehicle? selectedVehicle;
   String note = '';
+
+  /// The Firestore id of the order after [submit] succeeds. The AI chat uses
+  /// it to tell the customer which order was created.
+  String? createdOrderId;
+
   // Locations selected while building this specific order.
 // Each new order draft gets its own pickup/drop-off locations.
 GeoPoint? pickupLocation;
@@ -204,7 +209,7 @@ pickupLocation: pickupLocation,
 dropoffLocation: needsDropoff ? dropoffLocation : null,
       );
 
-      await _orderModel.createOrder(order);
+      createdOrderId = await _orderModel.createOrder(order);
       return null;
     } catch (e) {
       debugPrint('createOrder failed: $e'); // shows the real Firestore error
