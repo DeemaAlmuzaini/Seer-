@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'order_details_page.dart';
+
 import '../../controllers/order_draft_controller.dart';
 import '../../theme/app_colors.dart'; 
 import '../../models/pricing_model.dart';
@@ -38,7 +40,18 @@ class _OrderReviewPageState extends State<OrderReviewPage> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
       return;
     }
-    Navigator.of(context).pop('تم إرسال طلبك، جارٍ البحث عن مزود خدمة');
+    final orderId = _controller.createdOrderId;
+    if (orderId == null) {
+      Navigator.of(context).pop('تم إرسال طلبك، جارٍ البحث عن مزود خدمة');
+      return;
+    }
+    // Open the new order so the customer can follow it or cancel it (#20).
+    final navigator = Navigator.of(context);
+    OrderDetailsPage.openById(
+      navigator,
+      uid: _controller.uid,
+      orderId: orderId,
+    );
   }
 
   @override

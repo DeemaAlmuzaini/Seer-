@@ -45,6 +45,27 @@ class OrderDetailsPage extends StatefulWidget {
     );
   }
 
+  /// Opens the details page when only the order id is known, for example
+  /// right after the customer sends a new order. The pages between the
+  /// main screen and this one are removed in the same step, so going back
+  /// returns to the main screen.
+  ///
+  /// Parameters: [navigator] to push the page on, the customer's [uid]
+  /// and the [orderId] to show.
+  /// Returns: a future that completes when the page is closed.
+  static Future<void> openById(
+    NavigatorState navigator, {
+    required String uid,
+    required String orderId,
+  }) {
+    return navigator.pushAndRemoveUntil(
+      MaterialPageRoute<void>(
+        builder: (_) => _OrderByIdPage(uid: uid, orderId: orderId),
+      ),
+      (route) => route.isFirst,
+    );
+  }
+
   /// Creates the page state.
   ///
   /// Parameters: none. Returns: the state object.
@@ -984,6 +1005,76 @@ class _InfoRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Loads an order by its id, then shows its details page.
+class _OrderByIdPage extends StatefulWidget {
+  /// Creates the page.
+  ///
+  /// Parameters: the customer's [uid] and the [orderId] to load.
+  const _OrderByIdPage({required this.uid, required this.orderId});
+
+  final String uid;
+  final String orderId;
+
+  /// Creates the page state.
+  ///
+  /// Parameters: none. Returns: the state object.
+  @override
+  State<_OrderByIdPage> createState() => _OrderByIdPageState();
+}
+
+class _OrderByIdPageState extends State<_OrderByIdPage> {
+  late final CustomerOrdersController _controller = CustomerOrdersController(
+    uid: widget.uid,
+  );
+  late final Stream<ServiceOrder?> _order = _controller.watchOrder(
+    widget.orderId,
+  );
+
+  static const _missingOrder = 'هذا الطلب لم يعد متاحاً';
+
+  /// Releases the controller when the page closes.
+  ///
+  /// Parameters: none. Returns: nothing.
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Shows a loader until the order arrives, then its details page.
+  ///
+  /// Parameters: [context] is the build context.
+  /// Returns: the loader, an error message, or the details page.
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<ServiceOrder?>(
+      stream: _order,
+      builder: (context, snapshot) {
+        final order = snapshot.data;
+        if (order != null) {
+          return OrderDetailsPage(controller: _controller, initialOrder: order);
+        }
+        return Scaffold(
+          backgroundColor: CustomerColors.background,
+          appBar: AppBar(
+            backgroundColor: CustomerColors.background,
+            foregroundColor: CustomerColors.primaryText,
+            elevation: 0,
+          ),
+          body: Center(
+            child: snapshot.hasError
+                ? const Text(
+                    _missingOrder,
+                    style: TextStyle(color: CustomerColors.secondaryText),
+                  )
+                : const CircularProgressIndicator(),
+          ),
+        );
+      },
     );
   }
 }
