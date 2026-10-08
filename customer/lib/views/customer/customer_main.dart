@@ -6,7 +6,6 @@ import 'profile_page.dart';
 import 'home.dart';
 import 'notifications.dart';
 import 'orders.dart';
-import 'tracking.dart';
 
 class CustomerMain extends StatefulWidget {
   const CustomerMain({super.key});
@@ -26,12 +25,9 @@ Widget _selectedPage() {
         onOrderSent: () => setState(() => selectedIndex = 2),
       );
     case 1:
-      return const TrackingPage();
+      return CustomerOrders(uid: FirebaseAuth.instance.currentUser!.uid);
 
     case 2:
-      return const CustomerOrders();
-
-    case 3:
       return ProfilePage(
         uid: FirebaseAuth.instance.currentUser!.uid,
       );
@@ -189,10 +185,6 @@ leading: Padding(
                 GButton(
                   icon: Icons.home_rounded,
                   text: 'الصفحة الرئيسية',
-                ),
-                GButton(
-                  icon: Icons.near_me_rounded,
-                  text: 'التتبع',
                 ),
                 GButton(
                   icon: Icons.receipt_long_rounded,

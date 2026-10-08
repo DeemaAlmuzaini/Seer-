@@ -45,7 +45,6 @@ class OrderDraftController extends ChangeNotifier {
   bool isLoadingVehicles = true;
   bool isSubmitting = false;
   /// the id of the order once it is saved, so the next page can follow it
-  String? createdOrderId;
   /// True when the last submit found no nearby provider (#19),
   /// so the view can explain it instead of showing a short message.
   bool noNearbyProviders = false;
@@ -60,6 +59,10 @@ class OrderDraftController extends ChangeNotifier {
   String? selectedOptionId;
   Vehicle? selectedVehicle;
   String note = '';
+
+  /// The id of the order once it is created, so its details page can be
+  /// opened right after sending it (#20).
+  String? createdOrderId;
   // Locations selected while building this specific order.
 // Each new order draft gets its own pickup/drop-off locations.
 GeoPoint? pickupLocation;
@@ -194,7 +197,7 @@ String? validate() {
         lat: pickupLocation!.latitude,
         lng: pickupLocation!.longitude,
       );
-  
+
       // #19: nobody nearby, so nothing is saved
       if( candidates.isEmpty){
         noNearbyProviders = true;
