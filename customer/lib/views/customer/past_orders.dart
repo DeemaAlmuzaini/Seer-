@@ -1,40 +1,42 @@
 import 'package:flutter/material.dart';
 
-class CustomerPastOrders extends StatelessWidget {
-  const CustomerPastOrders({super.key});
+import '../../controllers/customer_orders_controller.dart';
+import '../../widgets/orders_list_view.dart';
+import 'order_details_page.dart';
 
+/// "Past orders" tab: completed, cancelled and rejected orders (#24).
+class CustomerPastOrders extends StatelessWidget {
+  /// Creates the tab.
+  ///
+  /// Parameters: [controller] provides the customer's orders.
+  const CustomerPastOrders({super.key, required this.controller});
+
+  final CustomerOrdersController controller;
+
+  static const _emptyTitle = 'لا توجد طلبات سابقة';
+  static const _emptySubtitle = 'ستظهر هنا الطلبات المكتملة والملغاة';
+
+  /// Builds the list of past orders and rebuilds when they change.
+  ///
+  /// Parameters: [context] is the build context.
+  /// Returns: the orders list or one of its states.
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.history_rounded,
-            size: 64,
-            color: Color(0xFF9AA4B8),
-          ),
-          SizedBox(height: 16),
-          Text(
-            'لا توجد طلبات سابقة',
-            textDirection: TextDirection.rtl,
-            style: TextStyle(
-              fontSize: 18,
-              color: Color(0xFF69728C),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'ستظهر هنا الطلبات المكتملة والملغاة',
-            textDirection: TextDirection.rtl,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF9AA4B8),
-            ),
-          ),
-        ],
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) => OrdersListView(
+        orders: controller.pastOrders,
+        isLoading: controller.isLoading,
+        errorMessage: controller.errorMessage,
+        emptyIcon: Icons.history_rounded,
+        emptyTitle: _emptyTitle,
+        emptySubtitle: _emptySubtitle,
+        onRetry: controller.start,
+        onOrderTap: (order) => OrderDetailsPage.open(
+          context,
+          controller: controller,
+          order: order,
+        ),
       ),
     );
   }
