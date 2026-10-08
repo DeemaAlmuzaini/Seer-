@@ -5,6 +5,10 @@ import '../../models/customer_orders_model.dart';
 import '../../models/order.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/order_display.dart';
+import '../../widgets/order_status_banner.dart';
+import '../../widgets/order_completed_card.dart';
+import '../../widgets/location_card.dart';
+import '../../controllers/address_controller.dart';
 import '../../widgets/plate_number_view.dart';
 
 /// Shows the full details of one order and its assigned provider (#25, #26).
@@ -136,6 +140,7 @@ class _OrderDetailsBody extends StatelessWidget {
   static const _noteLabel = 'ملاحظاتك';
   static const _estimatedPriceLabel = 'السعر التقديري';
   static const _finalPriceLabel = 'السعر النهائي';
+  static final _addresses = AddressController();
 
   /// Builds the header, timeline, provider and order information.
   ///
@@ -151,15 +156,31 @@ class _OrderDetailsBody extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
       children: [
         _OrderHeader(order: order),
+        if (OrderStatusBanner.hasMessage(order.status) &&
+            order.status != OrderStatus.completed) ...[
+          const SizedBox(height: 16),
+          OrderStatusBanner(status: order.status),
+        ],
         if (_TrackingSection.isVisibleFor(order.status)) ...[
           const SizedBox(height: 16),
           _TrackingSection(status: order.status),
         ],
         const SizedBox(height: 16),
-        _OrderTimeline(order: order),
+        if (order.status == OrderStatus.completed)
+          OrderCompletedCard(order: order)
+        else
+          _OrderTimeline(order: order),
         if (providerId != null && providerId.isNotEmpty) ...[
           const SizedBox(height: 14),
           _ProviderCard(providerId: providerId, controller: controller),
+        ],
+        if (order.pickupLocation != null) ...[
+          const SizedBox(height: 14),
+          LocationCard(
+            pickup: order.pickupLocation!,
+            dropoff: order.dropoffLocation,
+            controller: _addresses,
+          ),
         ],
         const SizedBox(height: 14),
         _InfoCard(

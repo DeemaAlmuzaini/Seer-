@@ -42,6 +42,7 @@ class OrderStatusStyle {
   /// Returns: warning for waiting, accent for active, success for
   /// completed, error for cancelled.
   static Color colorOf(String status) {
+    if (status == OrderStatus.cancelled) return CustomerColors.secondaryText;
     if (cancelledStatuses.contains(status)) return AppStatusColors.error;
     switch (status) {
       case OrderStatus.pending:
