@@ -6,6 +6,7 @@ import '../../controllers/order_draft_controller.dart';
 import '../../theme/app_colors.dart'; 
 import '../../models/pricing_model.dart';
 import '../../widgets/vehicle_picker_sheet.dart';
+import '../../widgets/no_provider_dialog.dart';
 
 /// VIEW: the order details before it is sent (#17).
 /// Everything here is read-only except the vehicle, which can still be
@@ -36,7 +37,14 @@ class _OrderReviewPageState extends State<OrderReviewPage> {
   Future<void> _confirm() async {
     final error = await _controller.submit();
     if (!mounted) return;
+
     if (error != null) {
+      // #19: explain clearly instead of a short message at the bottom.
+      if (_controller.noNearbyProviders) {
+        await showNoProviderDialog(context);
+        return;
+      }
+      // Any other problem (missing location, no internet...).
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
       return;
     }
