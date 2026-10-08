@@ -92,4 +92,50 @@ class CustomerOrdersController extends ChangeNotifier {
     _subscription?.cancel();
     super.dispose();
   }
+
+  static const _cancelExpired =
+      'لم يعد بالإمكان إلغاء هذا الطلب، تم تحديث الصفحة.';
+  static const _cancelFailed =
+      'تعذر إلغاء الطلب. تحقق من الاتصال وحاول مرة أخرى.';
+
+  /// Tells whether the customer can cancel an order now (#20).
+  ///
+  /// Parameters: [order] is the order to check.
+  /// Returns: true when the cancel button should be shown.
+  bool canCancel(ServiceOrder order) =>
+      CustomerOrdersModel.canCancel(order, DateTime.now());
+
+  /// Returns the time left to cancel an accepted order (#20).
+  ///
+  /// Parameters: [order] is the order to check.
+  /// Returns: the time left, or null when there is no countdown.
+  Duration? cancelTimeLeft(ServiceOrder order) =>
+      CustomerOrdersModel.cancelTimeLeft(order, DateTime.now());
+
+  /// Cancels an order (#20).
+  ///
+  /// Parameters: [orderId] is the order to cancel.
+  /// Returns: null when it worked, or a message to show the customer.
+  Future<String?> cancelOrder(String orderId) async {
+    try {
+      await _model.cancelOrder(orderId);
+      return null;
+    } on StateError {
+      return _cancelExpired;
+    } catch (_) {
+      return _cancelFailed;
+    }
+  }
+
+  /// Returns how much of the cancel window is left, for the progress
+  /// shown inside the cancel button (#20).
+  ///
+  /// Parameters: [order] is the order to check.
+  /// Returns: a value from 0 to 1, or null when there is no countdown.
+  double? cancelProgress(ServiceOrder order) {
+    final left = cancelTimeLeft(order);
+    if (left == null) return null;
+    final total = CustomerOrdersModel.cancelWindow.inMilliseconds;
+    return (left.inMilliseconds / total).clamp(0.0, 1.0);
+  }
 }

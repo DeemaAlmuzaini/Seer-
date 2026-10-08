@@ -6,6 +6,7 @@ import '../../models/order.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/order_display.dart';
 import '../../widgets/order_status_banner.dart';
+import '../../widgets/cancel_order_section.dart';
 import '../../widgets/order_completed_card.dart';
 import '../../widgets/location_card.dart';
 import '../../controllers/address_controller.dart';
@@ -38,10 +39,8 @@ class OrderDetailsPage extends StatefulWidget {
   }) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => OrderDetailsPage(
-          controller: controller,
-          initialOrder: order,
-        ),
+        builder: (_) =>
+            OrderDetailsPage(controller: controller, initialOrder: order),
       ),
     );
   }
@@ -54,8 +53,9 @@ class OrderDetailsPage extends StatefulWidget {
 }
 
 class _OrderDetailsPageState extends State<OrderDetailsPage> {
-  late final Stream<ServiceOrder?> _orderStream =
-      widget.controller.watchOrder(widget.initialOrder.id);
+  late final Stream<ServiceOrder?> _orderStream = widget.controller.watchOrder(
+    widget.initialOrder.id,
+  );
 
   static const _title = 'تفاصيل الطلب';
   static const _missingOrder = 'هذا الطلب لم يعد متاحاً';
@@ -101,8 +101,9 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           initialData: widget.initialOrder,
           builder: (context, snapshot) {
             // Keep showing the last known order if live updates fail.
-            final order =
-                snapshot.hasError ? widget.initialOrder : snapshot.data;
+            final order = snapshot.hasError
+                ? widget.initialOrder
+                : snapshot.data;
             if (order == null) {
               return const Center(
                 child: Text(
@@ -145,70 +146,77 @@ class _OrderDetailsBody extends StatelessWidget {
   /// Builds the header, timeline, provider and order information.
   ///
   /// Parameters: [context] is the build context.
-  /// Returns: a list view of sections.
+  /// Returns: the scrolling sections with the cancel bar pinned below.
   @override
   Widget build(BuildContext context) {
     final providerId = order.providerId;
     final finalPrice = order.finalPrice;
     final note = order.note.trim();
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+    return Column(
       children: [
-        _OrderHeader(order: order),
-        if (OrderStatusBanner.hasMessage(order.status) &&
-            order.status != OrderStatus.completed) ...[
-          const SizedBox(height: 16),
-          OrderStatusBanner(status: order.status),
-        ],
-        if (_TrackingSection.isVisibleFor(order.status)) ...[
-          const SizedBox(height: 16),
-          _TrackingSection(status: order.status),
-        ],
-        const SizedBox(height: 16),
-        if (order.status == OrderStatus.completed)
-          OrderCompletedCard(order: order)
-        else
-          _OrderTimeline(order: order),
-        if (providerId != null && providerId.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          _ProviderCard(providerId: providerId, controller: controller),
-        ],
-        if (order.pickupLocation != null) ...[
-          const SizedBox(height: 14),
-          LocationCard(
-            pickup: order.pickupLocation!,
-            dropoff: order.dropoffLocation,
-            controller: _addresses,
-          ),
-        ],
-        const SizedBox(height: 14),
-        _InfoCard(
-          rows: [
-            _InfoRow(label: _vehicleLabel, value: order.vehicleTitle),
-            _InfoRow(label: _plateLabel, value: order.vehiclePlateArabic),
-            _InfoRow(
-              label: _dateLabel,
-              value: OrderFormat.date(order.createdAt),
-            ),
-            _InfoRow(
-              label: _timeLabel,
-              value: OrderFormat.time(order.createdAt),
-            ),
-            if (note.isNotEmpty) _InfoRow(label: _noteLabel, value: note),
-            _InfoRow(
-              label: _estimatedPriceLabel,
-              value: OrderFormat.price(order.estimatedPrice),
-              highlight: finalPrice == null,
-            ),
-            if (finalPrice != null)
-              _InfoRow(
-                label: _finalPriceLabel,
-                value: OrderFormat.price(finalPrice),
-                highlight: true,
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+            children: [
+              _OrderHeader(order: order),
+              if (OrderStatusBanner.hasMessage(order.status) &&
+                  order.status != OrderStatus.completed) ...[
+                const SizedBox(height: 16),
+                OrderStatusBanner(status: order.status),
+              ],
+              if (_TrackingSection.isVisibleFor(order.status)) ...[
+                const SizedBox(height: 16),
+                _TrackingSection(status: order.status),
+              ],
+              const SizedBox(height: 16),
+              if (order.status == OrderStatus.completed)
+                OrderCompletedCard(order: order)
+              else
+                _OrderTimeline(order: order),
+              if (providerId != null && providerId.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                _ProviderCard(providerId: providerId, controller: controller),
+              ],
+              if (order.pickupLocation != null) ...[
+                const SizedBox(height: 14),
+                LocationCard(
+                  pickup: order.pickupLocation!,
+                  dropoff: order.dropoffLocation,
+                  controller: _addresses,
+                ),
+              ],
+              const SizedBox(height: 14),
+              _InfoCard(
+                rows: [
+                  _InfoRow(label: _vehicleLabel, value: order.vehicleTitle),
+                  _InfoRow(label: _plateLabel, value: order.vehiclePlateArabic),
+                  _InfoRow(
+                    label: _dateLabel,
+                    value: OrderFormat.date(order.createdAt),
+                  ),
+                  _InfoRow(
+                    label: _timeLabel,
+                    value: OrderFormat.time(order.createdAt),
+                  ),
+                  if (note.isNotEmpty) _InfoRow(label: _noteLabel, value: note),
+                  _InfoRow(
+                    label: _estimatedPriceLabel,
+                    value: OrderFormat.price(order.estimatedPrice),
+                    highlight: finalPrice == null,
+                  ),
+                  if (finalPrice != null)
+                    _InfoRow(
+                      label: _finalPriceLabel,
+                      value: OrderFormat.price(finalPrice),
+                      highlight: true,
+                    ),
+                ],
               ),
-          ],
+            ],
+          ),
         ),
+        CancelOrderSection(order: order, controller: controller),
       ],
     );
   }
@@ -284,10 +292,7 @@ class _TrackingSection extends StatelessWidget {
 
   final String status;
 
-  static const _visibleStatuses = {
-    OrderStatus.accepted,
-    OrderStatus.onTheWay,
-  };
+  static const _visibleStatuses = {OrderStatus.accepted, OrderStatus.onTheWay};
 
   static const _acceptedTitle = 'المزود يستعد للانطلاق';
   static const _acceptedBody =
@@ -413,7 +418,10 @@ class _OrderTimeline extends StatelessWidget {
           state: _StepState.done,
           time: order.createdAt,
         ),
-        const _TimelineStep(label: _cancelledLabel, state: _StepState.cancelled),
+        const _TimelineStep(
+          label: _cancelledLabel,
+          state: _StepState.cancelled,
+        ),
       ];
     }
 
@@ -534,7 +542,10 @@ class _TimelineRow extends StatelessWidget {
         return Container(
           width: _markerSize,
           height: _markerSize,
-          decoration: BoxDecoration(color: _markerColor, shape: BoxShape.circle),
+          decoration: BoxDecoration(
+            color: _markerColor,
+            shape: BoxShape.circle,
+          ),
           child: Icon(
             step.state == _StepState.done
                 ? Icons.check_rounded
@@ -581,8 +592,8 @@ class _TimelineRow extends StatelessWidget {
     final trailing = isCurrent
         ? nowLabel
         : time != null
-            ? OrderFormat.time(time)
-            : null;
+        ? OrderFormat.time(time)
+        : null;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -614,13 +625,13 @@ class _TimelineRow extends StatelessWidget {
                       fontWeight: isCurrent
                           ? FontWeight.w700
                           : reached
-                              ? FontWeight.w600
-                              : FontWeight.w400,
+                          ? FontWeight.w600
+                          : FontWeight.w400,
                       color: isCurrent || step.state == _StepState.cancelled
                           ? _markerColor
                           : reached
-                              ? CustomerColors.primaryText
-                              : CustomerColors.secondaryText,
+                          ? CustomerColors.primaryText
+                          : CustomerColors.secondaryText,
                     ),
                   ),
                 ),
@@ -688,8 +699,9 @@ class _ProviderCardState extends State<_ProviderCard> {
   void didUpdateWidget(covariant _ProviderCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.providerId != widget.providerId) {
-      _providerFuture =
-          widget.controller.getAssignedProvider(widget.providerId);
+      _providerFuture = widget.controller.getAssignedProvider(
+        widget.providerId,
+      );
     }
   }
 

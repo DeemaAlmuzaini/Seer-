@@ -133,4 +133,61 @@ class CustomerOrdersModel {
     if (bTime == null) return 1;
     return bTime.compareTo(aTime);
   }
+
+  /// How long the customer can still cancel after a provider accepts (#20).
+  static const cancelWindow = Duration(minutes: 2);
+
+  /// Tells whether an order can still be cancelled by the customer (#20).
+  ///
+  /// Parameters: [order] is the order to check and [now] is the current
+  /// time.
+  /// Returns: true while the order is waiting for a provider, or accepted
+  /// less than [cancelWindow] ago.
+  static bool canCancel(ServiceOrder order, DateTime now) {
+    if (order.status == OrderStatus.pending) return true;
+    final left = cancelTimeLeft(order, now);
+    return left != null && left > Duration.zero;
+  }
+
+  /// Returns how long the customer has left to cancel an accepted order.
+  ///
+  /// Parameters: [order] is the order to check and [now] is the current
+  /// time.
+  /// Returns: the time left (never negative), or null when the order is
+  /// not accepted or has no acceptance time.
+  static Duration? cancelTimeLeft(ServiceOrder order, DateTime now) {
+    final acceptedAt = order.acceptedAt;
+    if (order.status != OrderStatus.accepted || acceptedAt == null) {
+      return null;
+    }
+    final left = acceptedAt.add(cancelWindow).difference(now);
+    return left.isNegative ? Duration.zero : left;
+  }
+
+  /// Cancels an order for the customer (#20).
+  ///
+  /// Runs in a transaction, so the order is only cancelled if it can still
+  /// be cancelled at the moment of saving, even if a provider changed it
+  /// a second earlier.
+  ///
+  /// Parameters: [orderId] is the order to cancel.
+  /// Returns: nothing. Throws [StateError] when the order can no longer be
+  /// cancelled.
+  Future<void> cancelOrder(String orderId) async {
+    final firestore = _firestoreOverride ?? FirebaseFirestore.instance;
+    final ref = firestore.collection(_ordersCollection).doc(orderId);
+    await firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(ref);
+      final data = snapshot.data();
+      if (data == null) throw StateError('Order not found');
+      final order = ServiceOrder.fromMap(snapshot.id, data);
+      if (!canCancel(order, DateTime.now())) {
+        throw StateError('Order can no longer be cancelled');
+      }
+      transaction.update(ref, {
+        'status': OrderStatus.cancelled,
+        'cancelledAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
 }
