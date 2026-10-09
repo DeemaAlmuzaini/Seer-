@@ -123,17 +123,6 @@ class _CancelOrderSectionState extends State<CancelOrderSection> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (timeLeft == null) ...[
-              const Text(
-                _pendingHint,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: CustomerColors.secondaryText,
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
             Material(
               color: AppStatusColors.error,
               borderRadius: radius,
@@ -209,6 +198,17 @@ class _CancelOrderSectionState extends State<CancelOrderSection> {
                 ),
               ),
             ),
+            if (timeLeft == null) ...[
+              const SizedBox(height: 8),
+              const Text(
+                _pendingHint,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: CustomerColors.secondaryText,
+                ),
+              ),
+            ],
           ],
         ),
       ),

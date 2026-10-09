@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../controllers/customer_orders_controller.dart';
 import '../../widgets/orders_list_view.dart';
 import 'order_details_page.dart';
+import 'request_service_page.dart';
 
 /// "Past orders" tab: completed, cancelled and rejected orders (#24).
 class CustomerPastOrders extends StatelessWidget {
@@ -35,6 +36,12 @@ class CustomerPastOrders extends StatelessWidget {
         onOrderTap: (order) => OrderDetailsPage.open(
           context,
           controller: controller,
+          order: order,
+        ),
+        // Rejected and auto-cancelled orders can be requested again (#21).
+        onOrderReorder: (order) => RequestServicePage.reorder(
+          context,
+          uid: controller.uid,
           order: order,
         ),
       ),

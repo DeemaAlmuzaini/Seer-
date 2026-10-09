@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../controllers/order_draft_controller.dart';
 import '../../controllers/location_controller.dart';
 import '../../theme/app_colors.dart';
+import '../../models/order.dart';
 import '../../models/pricing_model.dart';
 import '../../models/service_catalog.dart';
 import '../../widgets/vehicle_picker_sheet.dart';
@@ -21,6 +22,7 @@ class RequestServicePage extends StatefulWidget {
     required this.uid,
     required this.categoryId,
     this.preferredVehicleId,
+    this.reorderFrom,
   });
 
   final String uid;
@@ -30,6 +32,36 @@ class RequestServicePage extends StatefulWidget {
 
   /// The vehicle shown on the home page, pre-selected here.
   final String? preferredVehicleId;
+
+  /// The rejected or auto-cancelled order this request is copied from, or
+  /// null for a brand-new request (#21).
+  final ServiceOrder? reorderFrom;
+
+  /// Opens the request form filled with the data of an earlier order (#21).
+  ///
+  /// The customer can change anything, including the location, then
+  /// continues to the review page and confirms.
+  ///
+  /// Parameters: [context] to navigate from, the customer's [uid] and the
+  /// [order] to copy.
+  /// Returns: a future that completes when the page is closed, with the
+  /// success message if the order was sent.
+  static Future<String?> reorder(
+    BuildContext context, {
+    required String uid,
+    required ServiceOrder order,
+  }) {
+    return Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(
+        builder: (_) => RequestServicePage(
+          uid: uid,
+          categoryId: order.serviceCategoryId,
+          preferredVehicleId: order.vehicleId,
+          reorderFrom: order,
+        ),
+      ),
+    );
+  }
 
   @override
   State<RequestServicePage> createState() => _RequestServicePageState();
@@ -51,6 +83,12 @@ class _RequestServicePageState extends State<RequestServicePage> {
   @override
   void initState() {
     super.initState();
+    final source = widget.reorderFrom;
+    if (source != null) {
+      // Reorder (#21): start from the earlier order's data.
+      _controller.prefillFromOrder(source);
+      _note.text = source.note;
+    }
     _controller.loadVehicles();
     _controller.loadPrices();
   }

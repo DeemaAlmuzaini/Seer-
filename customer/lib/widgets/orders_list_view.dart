@@ -10,8 +10,9 @@ class OrdersListView extends StatelessWidget {
   ///
   /// Parameters: the [orders] to show, the [isLoading] flag, an optional
   /// [errorMessage], the empty state content ([emptyIcon], [emptyTitle],
-  /// [emptySubtitle]), [onOrderTap] for opening an order and [onRetry]
-  /// for reloading after an error.
+  /// [emptySubtitle]), [onOrderTap] for opening an order, [onRetry]
+  /// for reloading after an error and an optional [onOrderReorder] for
+  /// requesting an order again (#21).
   const OrdersListView({
     super.key,
     required this.orders,
@@ -22,6 +23,7 @@ class OrdersListView extends StatelessWidget {
     required this.emptySubtitle,
     required this.onOrderTap,
     required this.onRetry,
+    this.onOrderReorder,
   });
 
   final List<ServiceOrder> orders;
@@ -32,6 +34,10 @@ class OrdersListView extends StatelessWidget {
   final String emptySubtitle;
   final ValueChanged<ServiceOrder> onOrderTap;
   final VoidCallback onRetry;
+
+  /// Runs when the re-request button of a card is tapped. The button is
+  /// hidden on every card when this is null.
+  final ValueChanged<ServiceOrder>? onOrderReorder;
 
   static const _retryLabel = 'إعادة المحاولة';
 
@@ -73,7 +79,12 @@ class OrdersListView extends StatelessWidget {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final order = orders[index];
-        return OrderCard(order: order, onTap: () => onOrderTap(order));
+        final reorder = onOrderReorder;
+        return OrderCard(
+          order: order,
+          onTap: () => onOrderTap(order),
+          onReorder: reorder == null ? null : () => reorder(order),
+        );
       },
     );
   }

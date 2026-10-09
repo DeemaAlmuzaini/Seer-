@@ -20,6 +20,15 @@ class CustomerOrdersController extends ChangeNotifier {
   final CustomerOrdersModel _model;
   StreamSubscription<List<ServiceOrder>>? _subscription;
 
+  /// Fires at the nearest expiresAt of a pending order (#21).
+  Timer? _autoCancelTimer;
+
+  /// Orders whose auto-cancel is running now, so none is sent twice.
+  final Set<String> _autoCancelling = {};
+
+  /// Small delay added to the timer so it never fires just before expiresAt.
+  static const _timerMargin = Duration(milliseconds: 500);
+
   List<ServiceOrder> orders = [];
   bool isLoading = true;
   String? errorMessage;
@@ -58,6 +67,7 @@ class CustomerOrdersController extends ChangeNotifier {
     _subscription = _model.watchCustomerOrders(uid).listen(
       (result) {
         orders = result;
+        _scheduleAutoCancel();
         isLoading = false;
         errorMessage = null;
         notifyListeners();
@@ -90,6 +100,7 @@ class CustomerOrdersController extends ChangeNotifier {
   @override
   void dispose() {
     _subscription?.cancel();
+    _autoCancelTimer?.cancel();
     super.dispose();
   }
 
@@ -137,5 +148,49 @@ class CustomerOrdersController extends ChangeNotifier {
     if (left == null) return null;
     final total = CustomerOrdersModel.cancelWindow.inMilliseconds;
     return (left.inMilliseconds / total).clamp(0.0, 1.0);
+  }
+
+  /// Auto-cancels expired pending orders and sets a timer for the next one
+  /// (#21).
+  ///
+  /// Orders already past expiresAt are cancelled now, which covers a
+  /// customer who closed the app and opened it later. For the others, one
+  /// timer is set on the nearest expiresAt, so an open app cancels the order
+  /// on time.
+  ///
+  /// Parameters: none. Returns: nothing.
+  void _scheduleAutoCancel() {
+    _autoCancelTimer?.cancel();
+    _autoCancelTimer = null;
+
+    final now = DateTime.now();
+    DateTime? nextExpiry;
+    for (final order in orders) {
+      final expiresAt = order.expiresAt;
+      if (order.status != OrderStatus.pending || expiresAt == null) continue;
+      if (CustomerOrdersModel.isExpired(order, now)) {
+        _autoCancel(order.id);
+      } else if (nextExpiry == null || expiresAt.isBefore(nextExpiry)) {
+        nextExpiry = expiresAt;
+      }
+    }
+    if (nextExpiry == null) return;
+    _autoCancelTimer =
+        Timer(nextExpiry.difference(now) + _timerMargin, _scheduleAutoCancel);
+  }
+
+  /// Auto-cancels one order and ignores failures (#21).
+  ///
+  /// Parameters: [orderId] is the order to cancel.
+  /// Returns: nothing. The orders stream emits the new status by itself.
+  Future<void> _autoCancel(String orderId) async {
+    if (!_autoCancelling.add(orderId)) return;
+    try {
+      await _model.autoCancelIfExpired(orderId);
+    } catch (e) {
+      debugPrint('autoCancel failed: $e');
+    } finally {
+      _autoCancelling.remove(orderId);
+    }
   }
 }
