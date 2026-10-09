@@ -6,6 +6,7 @@ import '../models/pricing_model.dart';
 import '../models/service_catalog.dart';
 import '../models/vehicle.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'matching_controller.dart';
  
 /// CONTROLLER: holds the service request while the customer is building it,
 /// and creates it at the end.
@@ -38,10 +39,15 @@ class OrderDraftController extends ChangeNotifier {
   final OrderModel _orderModel;
   final PricingModel _pricingModel;
   final CustomerModel _customerModel;
+  final MatchingController _matching = MatchingController();
  
   List<Vehicle> vehicles = [];
   bool isLoadingVehicles = true;
   bool isSubmitting = false;
+  /// the id of the order once it is saved, so the next page can follow it
+  /// True when the last submit found no nearby provider (#19),
+  /// so the view can explain it instead of showing a short message.
+  bool noNearbyProviders = false;
   String? vehiclesError;
  
   ServicePrices prices = ServicePrices.fallback();
@@ -54,10 +60,9 @@ class OrderDraftController extends ChangeNotifier {
   Vehicle? selectedVehicle;
   String note = '';
 
-  /// The Firestore id of the order after [submit] succeeds. The AI chat uses
-  /// it to tell the customer which order was created.
+  /// The id of the order once it is created, so its details page can be
+  /// opened right after sending it (#20).
   String? createdOrderId;
-
   // Locations selected while building this specific order.
 // Each new order draft gets its own pickup/drop-off locations.
 GeoPoint? pickupLocation;
@@ -81,6 +86,20 @@ void clearDropoffLocation() {
   notifyListeners();
 }
  
+  /// Fills this draft from an earlier order, used by reorder (#21).
+  ///
+  /// Copies the service option, the note and both locations. The vehicle is
+  /// chosen through [preferredVehicleId] when the vehicles load.
+  ///
+  /// Parameters: [order] is the rejected or auto-cancelled order to copy.
+  /// Returns: nothing.
+  void prefillFromOrder(ServiceOrder order) {
+    selectedOptionId = order.serviceOptionId;
+    note = order.note;
+    pickupLocation = order.pickupLocation;
+    dropoffLocation = order.dropoffLocation;
+  }
+
   ServiceCategory? get category => ServiceCatalog.categoryById(categoryId);
  
   ServiceOption? get selectedOption => selectedOptionId == null
@@ -180,11 +199,26 @@ String? validate() {
     if (problem != null) return problem;
  
     isSubmitting = true;
+    noNearbyProviders = false;
     notifyListeners();
     try {
       final vehicle = selectedVehicle!;
       final option = selectedOption!;
- 
+      // #18: every nearby provider who offers this service receives it
+      final candidates = await _matching.findAvailableProviders(
+        categoryId: categoryId,
+        optionId: option.id,
+        lat: pickupLocation!.latitude,
+        lng: pickupLocation!.longitude,
+      );
+
+      // #19: nobody nearby, so nothing is saved
+      if( candidates.isEmpty){
+        noNearbyProviders = true;
+        return 'لا يوجد مزود خدمة متاح بالقرب منك حاليًا';
+      }
+
+
       final order = ServiceOrder(
         id: '',
         customerId: uid,
@@ -207,6 +241,7 @@ String? validate() {
 // Non-towing orders intentionally store no drop-off location.
 pickupLocation: pickupLocation,
 dropoffLocation: needsDropoff ? dropoffLocation : null,
+candidateProviderIds: candidates,
       );
 
       createdOrderId = await _orderModel.createOrder(order);
