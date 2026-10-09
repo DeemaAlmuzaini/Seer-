@@ -190,4 +190,43 @@ class CustomerOrdersModel {
       });
     });
   }
+
+  /// Tells whether a pending order has passed its expiry time (#21).
+  ///
+  /// Parameters: [order] is the order to check and [now] is the current
+  /// time.
+  /// Returns: true when the order is still pending and [now] is at or after
+  /// its expiresAt time.
+  static bool isExpired(ServiceOrder order, DateTime now) {
+    final expiresAt = order.expiresAt;
+    return order.status == OrderStatus.pending &&
+        expiresAt != null &&
+        !expiresAt.isAfter(now);
+  }
+
+  /// Moves a pending order to autoCancelled once its response window has
+  /// passed (#21).
+  ///
+  /// Runs in a transaction that reads the order again before writing, so an
+  /// order a provider accepted in the last second is left untouched.
+  ///
+  /// Parameters: [orderId] is the order to check.
+  /// Returns: true when the order was auto-cancelled, false when it was left
+  /// unchanged (not found, no longer pending, or not expired yet).
+  Future<bool> autoCancelIfExpired(String orderId) async {
+    final firestore = _firestoreOverride ?? FirebaseFirestore.instance;
+    final ref = firestore.collection(_ordersCollection).doc(orderId);
+    return firestore.runTransaction<bool>((transaction) async {
+      final snapshot = await transaction.get(ref);
+      final data = snapshot.data();
+      if (data == null) return false;
+      final order = ServiceOrder.fromMap(snapshot.id, data);
+      if (!isExpired(order, DateTime.now())) return false;
+      transaction.update(ref, {
+        'status': OrderStatus.autoCancelled,
+        'cancelledAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    });
+  }
 }

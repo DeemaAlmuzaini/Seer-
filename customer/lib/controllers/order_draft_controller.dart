@@ -86,6 +86,20 @@ void clearDropoffLocation() {
   notifyListeners();
 }
  
+  /// Fills this draft from an earlier order, used by reorder (#21).
+  ///
+  /// Copies the service option, the note and both locations. The vehicle is
+  /// chosen through [preferredVehicleId] when the vehicles load.
+  ///
+  /// Parameters: [order] is the rejected or auto-cancelled order to copy.
+  /// Returns: nothing.
+  void prefillFromOrder(ServiceOrder order) {
+    selectedOptionId = order.serviceOptionId;
+    note = order.note;
+    pickupLocation = order.pickupLocation;
+    dropoffLocation = order.dropoffLocation;
+  }
+
   ServiceCategory? get category => ServiceCatalog.categoryById(categoryId);
  
   ServiceOption? get selectedOption => selectedOptionId == null

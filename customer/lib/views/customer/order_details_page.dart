@@ -11,6 +11,7 @@ import '../../widgets/order_completed_card.dart';
 import '../../widgets/location_card.dart';
 import '../../controllers/address_controller.dart';
 import '../../widgets/plate_number_view.dart';
+import 'request_service_page.dart';
 
 /// Shows the full details of one order and its assigned provider (#25, #26).
 class OrderDetailsPage extends StatefulWidget {
@@ -184,7 +185,14 @@ class _OrderDetailsBody extends StatelessWidget {
               if (OrderStatusBanner.hasMessage(order.status) &&
                   order.status != OrderStatus.completed) ...[
                 const SizedBox(height: 16),
-                OrderStatusBanner(status: order.status),
+                OrderStatusBanner(
+                  status: order.status,
+                  onReorder: () => RequestServicePage.reorder(
+                    context,
+                    uid: controller.uid,
+                    order: order,
+                  ),
+                ),
               ],
               if (_TrackingSection.isVisibleFor(order.status)) ...[
                 const SizedBox(height: 16),
@@ -1035,6 +1043,16 @@ class _OrderByIdPageState extends State<_OrderByIdPage> {
   );
 
   static const _missingOrder = 'هذا الطلب لم يعد متاحاً';
+
+  /// Starts listening to the customer's orders so an expired pending order
+  /// is auto-cancelled while this page is open (#21).
+  ///
+  /// Parameters: none. Returns: nothing.
+  @override
+  void initState() {
+    super.initState();
+    _controller.start();
+  }
 
   /// Releases the controller when the page closes.
   ///
