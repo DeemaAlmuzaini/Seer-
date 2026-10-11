@@ -105,29 +105,6 @@ class _RequestServicePageState extends State<RequestServicePage> {
 
   // ---------------- Actions ----------------
 
-  /// Gets the customer's current GPS location and saves it
-  /// as the pickup location for this specific order draft (#15).
-  Future<void> _useCurrentLocation() async {
-    final success = await _locationController.getCurrentLocation();
-
-    if (!mounted) return;
-
-    if (!success) {
-      _showMessage(
-        _locationController.errorMessage ?? 'تعذر تحديد موقعك الحالي',
-      );
-      return;
-    }
-
-    final location = _locationController.pickupLocation;
-
-    if (location != null) {
-      // The LocationController handles GPS.
-      // The OrderDraftController only keeps the result for this order.
-      _controller.setPickupLocation(location);
-    }
-  }
-
   Future<void> _changeVehicle() async {
     final picked = await showVehiclePicker(
       context: context,
@@ -174,9 +151,15 @@ class _RequestServicePageState extends State<RequestServicePage> {
  Future<void> _selectPickupFromMap() async {
   final LatLng? selectedLocation = await Navigator.of(context).push<LatLng>(
     MaterialPageRoute(
-      builder: (_) => const LocationPickerPage(
-        title: 'تحديد موقع المركبة',
-      ),
+builder: (_) => LocationPickerPage(
+  title: 'تحديد موقع المركبة',
+  initialSelectedLocation: _controller.pickupLocation == null
+      ? null
+      : LatLng(
+          _controller.pickupLocation!.latitude,
+          _controller.pickupLocation!.longitude,
+        ),
+),
     ),
   );
 
@@ -197,9 +180,15 @@ class _RequestServicePageState extends State<RequestServicePage> {
 Future<void> _selectDropoffFromMap() async {
   final LatLng? selectedLocation = await Navigator.of(context).push<LatLng>(
     MaterialPageRoute(
-      builder: (_) => const LocationPickerPage(
-        title: 'تحديد موقع التوصيل',
-      ),
+   builder: (_) => LocationPickerPage(
+  title: 'تحديد موقع التوصيل',
+  initialSelectedLocation: _controller.dropoffLocation == null
+      ? null
+      : LatLng(
+          _controller.dropoffLocation!.latitude,
+          _controller.dropoffLocation!.longitude,
+        ),
+),
     ),
   );
 
@@ -307,19 +296,11 @@ Future<void> _selectDropoffFromMap() async {
               // ---- #15 / #16: not built yet ----
               const _SectionTitle('الموقع'),
 
-              ListenableBuilder(
-                listenable: _locationController,
-                builder: (context, _) {
-                  return _LocationRow(
-                    icon: Icons.my_location,
-                    title: 'موقع المركبة الحالي',
-                    isSelected: _controller.pickupLocation != null,
-                    isLoading: _locationController.isLoading,
-                    onUseCurrentLocation: _useCurrentLocation,
-                    onSelectFromMap: _selectPickupFromMap,
-                  );
-                },
-              ),
+  _MapLocationRow(
+  title: 'موقع المركبة الحالي',
+  isSelected: _controller.pickupLocation != null,
+  onSelectFromMap: _selectPickupFromMap,
+),
               if (_controller.needsDropoff) ...[
                 const SizedBox(height: 10),
 
@@ -606,138 +587,6 @@ class _Row extends StatelessWidget {
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Reusable location card for selecting a pickup or drop-off location.
-///
-/// The card only displays location state and actions.
-/// GPS and map logic are handled outside this widget.
-class _LocationRow extends StatelessWidget {
-  const _LocationRow({
-    required this.icon,
-    required this.title,
-    required this.isSelected,
-    required this.isLoading,
-    required this.onUseCurrentLocation,
-    required this.onSelectFromMap,
-  });
-
-  final IconData icon;
-  final String title;
-  final bool isSelected;
-  final bool isLoading;
-  final VoidCallback onUseCurrentLocation;
-  final VoidCallback onSelectFromMap;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: CustomerColors.fieldFill,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CustomerColors.cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: CustomerColors.primaryText,
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          Text(
-            isSelected
-                ? 'يمكنك تغيير الموقع في أي وقت'
-                : 'حدد موقع المركبة التي تحتاج إلى خدمة',
-            style: const TextStyle(
-              fontSize: 13,
-              color: CustomerColors.secondaryText,
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // Shows confirmation only; this is intentionally not clickable.
-          if (isSelected) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAF8F0),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFB7E4C7)),
-              ),
-              child: const Row(
-                children: [
-                  Icon(
-                    Icons.check_circle_outline,
-                    color: Color(0xFF16834B),
-                    size: 21,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'تم تحديد الموقع',
-                    style: TextStyle(
-                      color: Color(0xFF16834B),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-
-          Row(
-            children: [
-              // Opens the shared map-selection page for the pickup location.
-              Expanded(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: CustomerColors.darkPanel,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: onSelectFromMap,
-                  icon: const Icon(Icons.map_outlined),
-                  label: const Text('اختيار من الخريطة'),
-                ),
-              ),
-
-              const SizedBox(width: 10),
-
-              Expanded(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: CustomerColors.darkPanel,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: isLoading ? null : onUseCurrentLocation,
-                  icon: isLoading
-                      ? const SizedBox(
-                          width: 17,
-                          height: 17,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.my_location, size: 19),
-                  label: Text(
-                    isLoading ? 'جاري التحديد...' : 'استخدام موقعي الحالي',
-                  ),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
