@@ -4,3 +4,5 @@
 .idea/
 /firebase-debug.log
 /firestore-debug.log
+# Stadia Maps private configuration
+keys.json
