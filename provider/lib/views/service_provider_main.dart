@@ -30,6 +30,7 @@ class _ServiceProviderMainState extends State<ServiceProviderMain>
   /// Changes each time a notification opens the orders tab, so the tab is
   /// rebuilt on "available requests" even if another sub-tab was open.
   int _ordersVisit = 0;
+  String? _requestedDetailsId;
 
   /// False while the app is in the background or the screen is locked.
   bool _inForeground = true;
@@ -110,6 +111,16 @@ class _ServiceProviderMainState extends State<ServiceProviderMain>
     if (!mounted) return;
     Navigator.of(context).popUntil((route) => route.isFirst);
     setState(() {
+      _requestedDetailsId = null;
+      selectedIndex = 1;
+      _ordersVisit++;
+    });
+  }
+
+  void _openRequestDetails(String orderId) {
+    if (!mounted) return;
+    setState(() {
+      _requestedDetailsId = orderId;
       selectedIndex = 1;
       _ordersVisit++;
     });
@@ -136,11 +147,14 @@ class _ServiceProviderMainState extends State<ServiceProviderMain>
           ? ProviderHome(
     firstName: widget.firstName,
     authService: widget.authService,
+    onOpenRequest: _openRequestDetails,
+    onViewAllRequests: _openAvailableRequests,
   )
           : selectedIndex == 1
           ? ProviderOrders(
               key: ValueKey(_ordersVisit),
               authService: widget.authService,
+              initialOrderId: _requestedDetailsId,
             )
           : ProviderProfileScreen(authService: widget.authService),
 

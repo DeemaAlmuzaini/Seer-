@@ -1,109 +1,129 @@
 import 'package:flutter/material.dart';
+
 import '../services/auth_service.dart';
 import '../services/device_alerts.dart';
 import '../controllers/provider_availability_controller.dart';
 import '../controllers/provider_stats_controller.dart';
+import '../controllers/provider_requests_controller.dart';
+import '../models/order.dart';
 
 class ProviderHome extends StatefulWidget {
   const ProviderHome({
     super.key,
     this.firstName = '',
     this.authService,
+    required this.onOpenRequest,
+    required this.onViewAllRequests,
   });
 
   final String firstName;
   final AuthService? authService;
+  final ValueChanged<String> onOpenRequest;
+  final VoidCallback onViewAllRequests;
 
   @override
   State<ProviderHome> createState() => _ProviderHomeState();
 }
 
 class _ProviderHomeState extends State<ProviderHome> {
- bool isAvailable = false;
-bool isLoadingAvailability = true;
-bool isSavingAvailability = false;
+  bool isAvailable = false;
+  bool isLoadingAvailability = true;
+  bool isSavingAvailability = false;
 
-late final ProviderAvailabilityController _availabilityController;
+  late final ProviderAvailabilityController _availabilityController;
+  late final ProviderRequestsController _requests;
 
-// Quick statistics (#36). Null until loaded; shown as 0 meanwhile.
-final ProviderStatsController _statsController = ProviderStatsController();
-ProviderStats? _stats;
+  // Quick statistics (#36). Null until loaded; shown as 0 meanwhile.
+  final ProviderStatsController _statsController = ProviderStatsController();
+  ProviderStats? _stats;
 
-@override
-void initState() {
-  super.initState();
-  _availabilityController = ProviderAvailabilityController(
-    widget.authService ?? AuthService(),
-  );
-  _loadAvailability();
-  _loadStats();
-}
-
-Future<void> _loadStats() async {
-  final stats = await _statsController.load();
-  if (!mounted) return;
-  setState(() => _stats = stats);
-}
-
-Future<void> _loadAvailability() async {
-  try {
-    final availability = await _availabilityController.loadAvailability();
-    if (!mounted) return;
-
-    setState(() {
-      isAvailable = availability;
-      isLoadingAvailability = false;
-    });
-    // Already available from before: keep requests arriving in the background.
-    if (availability) DeviceAlerts.setAvailableMode(true);
-  } catch (_) {
-    if (!mounted) return;
-
-    setState(() {
-      isLoadingAvailability = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('تعذر تحميل حالة التوفر')),
+  @override
+  void initState() {
+    super.initState();
+    _availabilityController = ProviderAvailabilityController(
+      widget.authService ?? AuthService(),
     );
+    _requests = ProviderRequestsController(
+      providerId: (widget.authService ?? AuthService()).currentUser?.uid ?? '',
+    )..start();
+    _loadAvailability();
+    _loadStats();
   }
-}
 
-/// Takes [value]; saves availability and shows location/save errors to the user.
-Future<void> _changeAvailability(bool value) async {
-  setState(() => isSavingAvailability = true);
+  @override
+  void dispose() {
+    _requests.dispose();
+    super.dispose();
+  }
 
-  try {
-    await _availabilityController.updateAvailability(value);
+  Future<void> _loadStats() async {
+    final stats = await _statsController.load();
     if (!mounted) return;
+    setState(() => _stats = stats);
+  }
 
-    setState(() => isAvailable = value);
+  Future<void> _loadAvailability() async {
+    try {
+      final availability = await _availabilityController.loadAvailability();
+      if (!mounted) return;
 
-    // Notifications (#47): asked here, after the location step, so the two
-    // permission dialogs never overlap. While available, the app keeps
-    // listening in the background.
-    if (value) await DeviceAlerts.requestPermission();
-    await DeviceAlerts.setAvailableMode(value);
-  } catch (error) {
-    if (!mounted) return;
+      setState(() {
+        isAvailable = availability;
+        isLoadingAvailability = false;
+      });
+      // Already available from before: keep requests arriving in the background.
+      if (availability) DeviceAlerts.setAvailableMode(true);
+    } catch (_) {
+      if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(error is StateError
-          ? error.message.toString()
-          : 'تعذر حفظ حالة التوفر')),
-    );
-  } finally {
-    if (mounted) {
-      setState(() => isSavingAvailability = false);
+      setState(() {
+        isLoadingAvailability = false;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تعذر تحميل حالة التوفر')));
     }
   }
-}
+
+  /// Takes [value]; saves availability and shows location/save errors to the user.
+  Future<void> _changeAvailability(bool value) async {
+    setState(() => isSavingAvailability = true);
+
+    try {
+      await _availabilityController.updateAvailability(value);
+      if (!mounted) return;
+
+      setState(() => isAvailable = value);
+
+      // Notifications (#47): asked here, after the location step, so the two
+      // permission dialogs never overlap. While available, the app keeps
+      // listening in the background.
+      if (value) await DeviceAlerts.requestPermission();
+      await DeviceAlerts.setAvailableMode(value);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error is StateError
+                ? error.message.toString()
+                : 'تعذر حفظ حالة التوفر',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => isSavingAvailability = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -154,12 +174,12 @@ Future<void> _changeAvailability(bool value) async {
               children: [
                 // Availability Switch
                 Switch(
-  value: isAvailable,
-  activeThumbColor: const Color(0xFF1C63D6),
-  onChanged: isLoadingAvailability || isSavingAvailability
-      ? null
-      : _changeAvailability,
-),
+                  value: isAvailable,
+                  activeThumbColor: const Color(0xFF1C63D6),
+                  onChanged: isLoadingAvailability || isSavingAvailability
+                      ? null
+                      : _changeAvailability,
+                ),
 
                 // Availability Text
                 Column(
@@ -251,42 +271,207 @@ Future<void> _changeAvailability(bool value) async {
           ),
           const SizedBox(height: 12),
 
-          // No available requests yet
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFDCE6F5)),
-            ),
-            child: const Column(
+          AnimatedBuilder(
+            animation: _requests,
+            builder: (context, _) {
+              if (_requests.loading) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(20),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+              final orders = _requests.availableRequests.take(3).toList();
+              return Column(
+                children: [
+                  if (orders.isEmpty) _emptyRequestsCard(),
+                  for (final order in orders) ...[
+                    _requestPreviewCard(order),
+                    const SizedBox(height: 10),
+                  ],
+                  if (orders.isNotEmpty)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: widget.onViewAllRequests,
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          textDirection: TextDirection.rtl,
+                          children: [
+                            Text('عرض جميع الطلبات'),
+                            SizedBox(width: 6),
+                            Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Icon(Icons.arrow_back_rounded),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyRequestsCard() => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFFDCE6F5)),
+    ),
+    child: const Column(
+      children: [
+        Icon(Icons.inbox_outlined, color: Color(0xFF69728C), size: 36),
+        SizedBox(height: 10),
+        Text(
+          'لا توجد طلبات متاحة حالياً',
+          textDirection: TextDirection.rtl,
+          style: TextStyle(
+            color: Color(0xFF0E1B33),
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: 5),
+        Text(
+          'عند توفر طلبات جديدة في منطقتك، ستظهر هنا',
+          textDirection: TextDirection.rtl,
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Color(0xFF69728C), fontSize: 13),
+        ),
+      ],
+    ),
+  );
+
+  Widget _requestPreviewCard(ServiceOrder order) {
+    final price = order.estimatedPrice;
+    final priceText = price == null
+        ? 'السعر غير محدد'
+        : '${price.toString()} ر.س';
+    final vehicle = order.vehicleTitle.trim().isEmpty
+        ? 'مركبة غير محددة'
+        : order.vehicleTitle;
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          if (_requests.canRespond(order)) widget.onOpenRequest(order.id);
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFDCE6F5)),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.inbox_outlined, color: Color(0xFF69728C), size: 36),
-
-                SizedBox(height: 10),
-
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${order.serviceCategoryLabel} - ${order.serviceOptionLabel}',
+                        style: const TextStyle(
+                          color: Color(0xFF0E1B33),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _requests.countdown(order),
+                      textDirection: TextDirection.ltr,
+                      style: const TextStyle(
+                        color: Color(0xFF1C63D6),
+                        fontWeight: FontWeight.w700,
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 Text(
-                  'لا توجد طلبات متاحة حالياً',
-                  textDirection: TextDirection.rtl,
-                  style: TextStyle(
-                    color: Color(0xFF0E1B33),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  vehicle,
+                  style: const TextStyle(
+                    color: Color(0xFF69728C),
+                    fontSize: 14,
                   ),
                 ),
-
-                SizedBox(height: 5),
-
-                Text(
-                  'عند توفر طلبات جديدة في منطقتك، ستظهر هنا',
-                  textDirection: TextDirection.rtl,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFF69728C), fontSize: 13),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 18,
+                      color: Color(0xFF69728C),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        _requests.distanceText(order),
+                        style: const TextStyle(
+                          color: Color(0xFF69728C),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      priceText,
+                      style: const TextStyle(
+                        color: Color(0xFF1C63D6),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                if (order.serviceCategoryId == 'towing') ...[
+                  const SizedBox(height: 4),
+                  const Text(
+                    'السعر الأساسي لا يشمل رسوم المسافة',
+                    style: TextStyle(color: Color(0xFF69728C), fontSize: 11),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      'عرض التفاصيل',
+                      style: TextStyle(
+                        color: Color(0xFF1C63D6),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        size: 17,
+                        color: Color(0xFF1C63D6),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
