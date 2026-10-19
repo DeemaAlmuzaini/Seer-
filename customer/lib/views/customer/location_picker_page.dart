@@ -340,7 +340,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                       onChanged: _onSearchChanged,
                       textInputAction: TextInputAction.search,
                       decoration: InputDecoration(
-                        hintText: 'ابحثي عن موقع أو عنوان...',
+                        hintText: 'ابحث عن موقع أو عنوان...',
                         prefixIcon: const Icon(Icons.search),
                         suffixIcon: _isSearching
                             ? const Padding(
