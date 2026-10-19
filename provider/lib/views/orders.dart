@@ -7,12 +7,14 @@ import '../theme/app_colors.dart';
 import 'available_requests.dart';
 import 'current_order.dart';
 import 'history.dart';
+import 'request_details_page.dart';
 
 /// Provider requests, accepted work and previous orders in one place.
 class ProviderOrders extends StatefulWidget {
   /// Takes an optional session [authService]; creates the provider's orders tabs.
-  const ProviderOrders({super.key, this.authService});
+  const ProviderOrders({super.key, this.authService, this.initialOrderId});
   final AuthService? authService;
+  final String? initialOrderId;
 
   /// Takes no inputs; returns state owning the live request subscription.
   @override
@@ -36,6 +38,24 @@ class _ProviderOrdersState extends State<ProviderOrders>
     );
     _requests.addListener(_showError);
     _requests.start();
+    if (widget.initialOrderId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _openInitialDetails());
+    }
+  }
+
+  Future<void> _openInitialDetails() async {
+    final id = widget.initialOrderId;
+    if (!mounted || id == null) return;
+    final accepted = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => RequestDetailsPage(
+          orderId: id,
+          controller: _requests,
+          addresses: _addresses,
+        ),
+      ),
+    );
+    if (mounted && accepted == true) _tabs.animateTo(1);
   }
 
   /// Takes app [state]; refreshes GPS on resume. Deadlines use absolute time.
