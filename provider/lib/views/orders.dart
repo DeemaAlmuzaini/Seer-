@@ -67,11 +67,16 @@ class _ProviderOrdersState extends State<ProviderOrders>
 
   /// Takes no inputs; shows each controller error once after the current frame.
   void _showError() {
+    final isLocation = _requests.lastErrorIsLocation;
     final error = _requests.takeError();
     if (error == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        showAppMessage(context, error);
+        showAppMessage(
+          context,
+          error,
+          type: isLocation ? AppMessageType.warning : AppMessageType.error,
+        );      
       }
     });
   }
