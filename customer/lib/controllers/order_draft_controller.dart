@@ -228,6 +228,7 @@ String? validate() {
         customerPhone: customer?.phone ?? '',
         vehicleId: vehicle.id,
         vehicleTitle: vehicle.title,
+        vehicleColor: vehicle.color,
         vehiclePlateArabic: vehicle.plateNumberArabic,
         vehiclePlateLatin: vehicle.plateNumberLatin,
         serviceCategoryId: categoryId,

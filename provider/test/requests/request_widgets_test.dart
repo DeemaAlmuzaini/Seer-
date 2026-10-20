@@ -70,7 +70,8 @@ void main() {
       expect(find.text('المركبة عند مدخل الحي'), findsOneWidget);
       expect(find.text('شارع الملك فهد، الرياض'), findsOneWidget);
       expect(find.text('حي النرجس، الرياض'), findsOneWidget);
-      expect(find.text('السعر الأساسي: 150 ر.س'), findsOneWidget);
+      expect(find.text('السعر الأساسي'), findsOneWidget);
+      expect(find.text('150 ر.س'), findsOneWidget);
       expect(
         find.text('لا يشمل رسوم المسافة، وليس السعر النهائي.'),
         findsOneWidget,
