@@ -73,6 +73,12 @@ class FakeAiAssistant implements AiAssistant {
     return _pending = pending.copyWithLocations(pickup: pickup, dropoff: dropoff);
   }
 
+  /** Mirrors the real assistant's pending-order cleanup after manual send. */
+  @override
+  void markSummarySent(String summaryId) {
+    if (_pending?.id == summaryId) _pending = null;
+  }
+
   @override
   void reset() {
     _active = _vehicles.isEmpty ? null : _vehicles.first;

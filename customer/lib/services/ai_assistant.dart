@@ -41,6 +41,13 @@ abstract class AiAssistant {
     String imageMimeType = 'image/jpeg',
   });
 
+  /**
+   * Called after the customer submits a suggestion through the editable form.
+   * Clears any pending AI confirmation to avoid sending the same card twice.
+   * Implementations without pending orders can keep the default no-op.
+   */
+  void markSummarySent(String summaryId) {}
+
   /// Forgets the conversation, any summary waiting for confirmation, and goes
   /// back to the default vehicle.
   void reset();

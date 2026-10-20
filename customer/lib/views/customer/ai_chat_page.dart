@@ -5,6 +5,9 @@ import '../../models/chat_message.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/chat_bubble.dart';
 import '../../widgets/chat_input_bar.dart';
+import '../../widgets/order_summary_card.dart';
+import 'order_details_page.dart';
+import 'request_service_page.dart';
 import 'dart:typed_data';
 import '../../widgets/image_attach_button.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -297,7 +300,13 @@ setState(() {
       itemBuilder: (context, index) {
         if (index == messages.length) return _typing();
         final message = messages[index];
-        if (message.isSummary) return _summaryCard(message);
+        if (message.isSummary) {
+          return OrderSummaryCard(
+            message: message,
+            onRequest: () => _openRequestForm(message),
+            onViewOrder: () => _viewOrder(message.orderId),
+          );
+        }
         return ChatBubble(message: message);
       },
     );
@@ -360,43 +369,46 @@ setState(() {
 
   
 
-  /// TEMPORARY: piece 4 replaces this with the real summary card
-  /// (map buttons, confirm button...). It only shows the data for now.
-  Widget _summaryCard(ChatMessage message) {
-    final s = message.summary!;
-    final price = s.estimatedPrice == null
-        ? 'غير محدد'
-        : '${s.estimatedPrice} ريال${s.priceDependsOnDistance ? ' + حسب المسافة' : ''}';
-    final status = switch (message.summaryState) {
-      SummaryState.waiting => 'بانتظار تأكيدك',
-      SummaryState.cancelled => 'أُلغي هذا الملخص',
-      SummaryState.sent => 'تم إرسال الطلب',
-    };
+  /// Opens the request form filled with the service the assistant suggested.
+  ///
+  /// Parameters: [message] is the chat message that holds the suggestion.
+  /// Returns: nothing. The request page opens the order after it is sent.
+  final Set<String> _openingSuggestions = <String>{};
 
-    return Opacity(
-      opacity: message.summaryState == SummaryState.cancelled ? 0.5 : 1,
-      child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('ملخص الطلب', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              Text('المركبة: ${s.vehicle.title}'),
-              Text('الخدمة: ${s.categoryLabel} - ${s.optionLabel}'),
-              Text('السعر التقديري: $price'),
-              if (s.note.isNotEmpty) Text('ملاحظة: ${s.note}'),
-              if (s.missingLocationMessage != null)
-                Text(s.missingLocationMessage!,
-                    style: const TextStyle(color: AppStatusColors.warning)),
-              const SizedBox(height: 6),
-              Text(status, style: const TextStyle(color: CustomerColors.accent)),
-            ],
-          ),
-        ),
-      ),
+  /**
+   * Opens the editable request form once per suggestion.
+   * After successful submission, the returned Firestore order ID updates
+   * the same chat card. Closing the form without sending keeps it available.
+   */
+  Future<void> _openRequestForm(ChatMessage message) async {
+    final summary = message.summary;
+    if (summary == null || message.summaryState != SummaryState.waiting ||
+        !_openingSuggestions.add(summary.id)) {
+      return;
+    }
+    try {
+      final orderId = await RequestServicePage.fromSuggestion(
+        context,
+        uid: widget.uid,
+        summary: summary,
+      );
+      if (!mounted || orderId == null || orderId.isEmpty) return;
+      _chat.markSummarySent(summary.id, orderId);
+    } finally {
+      _openingSuggestions.remove(summary.id);
+    }
+  }
+
+  /// Opens the details page of the order that was sent from a card.
+  ///
+  /// Parameters: [orderId] is the Firestore id kept on the card.
+  /// Returns: nothing; does nothing when the id is not known.
+  void _viewOrder(String? orderId) {
+    if (orderId == null || orderId.isEmpty) return;
+    OrderDetailsPage.openById(
+      Navigator.of(context),
+      uid: widget.uid,
+      orderId: orderId,
     );
   }
 }

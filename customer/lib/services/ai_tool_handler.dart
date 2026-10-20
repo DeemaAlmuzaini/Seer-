@@ -372,6 +372,18 @@ class AiToolHandler {
     }
   }
 
+  /**
+   * Records that the request form submitted this pending suggestion.
+   * Clearing pendingSummary stops place_order from submitting it again,
+   * while lastPlaced informs Gemini that the order was already sent.
+   */
+  void markExternallyPlaced(String summaryId) {
+    final summary = pendingSummary;
+    if (summary == null || summary.id != summaryId) return;
+    pendingSummary = null;
+    lastPlaced = summary;
+  }
+
   /// Called from the card after the customer picks a point on the map.
   /// Returns the updated summary, or null if [summaryId] is not the card
   /// waiting for confirmation.
