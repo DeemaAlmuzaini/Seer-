@@ -1,8 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../controllers/current_order_controller.dart';
+import '../controllers/address_controller.dart';
+import '../widgets/location_card.dart';
 import '../models/order.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_snackbar.dart';
@@ -27,6 +28,7 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
   /// True while a status update is being saved, so the button cannot be
   /// pressed twice.
   bool _saving = false;
+  final AddressController _addresses = AddressController();
 
   @override
   Widget build(BuildContext context) {
@@ -93,15 +95,14 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
               _section(
                 title: 'الموقع',
                 children: [
-                  _infoRow(
-                    Icons.location_on_outlined,
-                    _locationText(order.pickupLocation),
-                  ),
-                  if (order.dropoffLocation != null)
-                    _infoRow(
-                      Icons.flag_outlined,
-                      'التسليم: ${_locationText(order.dropoffLocation)}',
-                    ),
+                  if (order.pickupLocation != null)
+                    LocationCard(
+                      pickup: order.pickupLocation!,
+                      dropoff: order.dropoffLocation,
+                      controller: _addresses,
+                    )
+                  else
+                    _infoRow(Icons.location_on_outlined, 'الموقع غير محدد'),
                 ],
               ),
               if (order.note.trim().isNotEmpty) ...[
@@ -430,15 +431,6 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
   }
 
   // ---------------- Formatting ----------------
-
-  /// The location as coordinates, or a placeholder when the customer has
-  /// not set one. Locations are saved as GeoPoint (#15, #16).
-  static String _locationText(GeoPoint? location) {
-    if (location == null) return 'الموقع غير محدد';
-    // \u2066 and \u2069 keep the numbers left-to-right on the Arabic screen.
-    return '\u2066${location.latitude.toStringAsFixed(5)}, '
-        '${location.longitude.toStringAsFixed(5)}\u2069';
-  }
 
   static String _priceText(num? price) {
     if (price == null) return 'غير محدد';
