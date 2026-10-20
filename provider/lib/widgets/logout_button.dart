@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
+import 'app_snackbar.dart';
 
 class LogoutButton extends StatelessWidget {
   const LogoutButton({super.key, this.authService});
@@ -34,8 +35,7 @@ class LogoutButton extends StatelessWidget {
       await (authService ?? AuthService()).logOut();
     } on AuthException catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.message)));
+      showAppMessage(context, error.message);
     }
   }
 
