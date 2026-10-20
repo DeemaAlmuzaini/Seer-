@@ -70,6 +70,14 @@ class ProviderOrderModel {
       if (snapshot.data()?['status'] != OrderStatus.inProgress) {
         throw StateError('Order is no longer ${OrderStatus.inProgress}');
       }
+      final providerId = (snapshot.data()?['providerId'] as String?) ?? '';
+      final providerRef = _firestore.collection('providers').doc(providerId);
+      final providerSnapshot = providerId.isEmpty
+          ? null
+          : await transaction.get(providerRef);
+      if (providerSnapshot?.data()?['activeOrderId'] == orderId) {
+        transaction.update(providerRef, {'activeOrderId': FieldValue.delete()});
+      }
       transaction.update(ref, {
         'status': OrderStatus.completed,
         'paymentConfirmed': true,

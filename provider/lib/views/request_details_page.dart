@@ -122,7 +122,13 @@ class RequestDetailsPage extends StatelessWidget {
                         },
                         onError: (message) {
                           if (context.mounted) {
-                            showAppMessage(context, message);
+                            showAppMessage(
+                              context,
+                              message,
+                              type: message == 'لديك طلب قيد التنفيذ. أكمله قبل قبول طلب جديد.'
+                                  ? AppMessageType.warning
+                                  : AppMessageType.error,
+                            );
                           }
                         },
                       ),
@@ -160,36 +166,39 @@ class RequestInformation extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (showHeader) Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ServiceIconTile(
-              categoryId: order.serviceCategoryId,
-              status: order.status,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    order.serviceCategoryLabel,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: CustomerColors.primaryText,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    order.serviceOptionLabel,
-                    style: const TextStyle(color: CustomerColors.secondaryText),
-                  ),
-                ],
+        if (showHeader)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ServiceIconTile(
+                categoryId: order.serviceCategoryId,
+                status: order.status,
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      order.serviceCategoryLabel,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: CustomerColors.primaryText,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      order.serviceOptionLabel,
+                      style: const TextStyle(
+                        color: CustomerColors.secondaryText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         if (showHeader) const SizedBox(height: 16),
         Text(
           order.vehicleTitle,
@@ -289,7 +298,9 @@ class RequestInformation extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                order.vehicleTitle.isEmpty ? 'المركبة غير محددة' : order.vehicleTitle,
+                order.vehicleTitle.isEmpty
+                    ? 'المركبة غير محددة'
+                    : order.vehicleTitle,
                 style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
@@ -297,7 +308,10 @@ class RequestInformation extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              _infoLine('لون المركبة', vehicleColor.isEmpty ? 'غير محدد' : vehicleColor),
+              _infoLine(
+                'لون المركبة',
+                vehicleColor.isEmpty ? 'غير محدد' : vehicleColor,
+              ),
               const Divider(height: 28, color: CustomerColors.cardBorder),
               const Text(
                 'رقم اللوحة',
@@ -319,7 +333,10 @@ class RequestInformation extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 note.isEmpty ? 'لا توجد ملاحظات' : note,
-                style: const TextStyle(fontSize: 15, color: CustomerColors.primaryText),
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: CustomerColors.primaryText,
+                ),
               ),
             ],
           ),
@@ -343,7 +360,10 @@ class RequestInformation extends StatelessWidget {
           ),
         if (towing && order.dropoffLocation == null) ...[
           const SizedBox(height: 8),
-          const Text('الوجهة غير متوفرة', style: TextStyle(color: Color(0xFF4B5563))),
+          const Text(
+            'الوجهة غير متوفرة',
+            style: TextStyle(color: Color(0xFF4B5563)),
+          ),
         ],
         const SizedBox(height: 12),
         _section(
@@ -355,19 +375,27 @@ class RequestInformation extends StatelessWidget {
               const Divider(height: 28, color: CustomerColors.cardBorder),
               Row(
                 children: [
-                  Expanded(child: Text(
-                    towing ? 'السعر الأساسي' : 'السعر التقديري',
-                    style: const TextStyle(fontSize: 13,
-                        color: Color(0xFF4B5563)),
-                  )),
+                  Expanded(
+                    child: Text(
+                      towing ? 'السعر الأساسي' : 'السعر التقديري',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF4B5563),
+                      ),
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  Expanded(child: Text(
-                    OrderFormat.price(order.estimatedPrice),
-                    textAlign: TextAlign.left,
-                    style: const TextStyle(fontSize: 17,
+                  Expanded(
+                    child: Text(
+                      OrderFormat.price(order.estimatedPrice),
+                      textAlign: TextAlign.left,
+                      style: const TextStyle(
+                        fontSize: 17,
                         fontWeight: FontWeight.w700,
-                        color: CustomerColors.primaryText),
-                  )),
+                        color: CustomerColors.primaryText,
+                      ),
+                    ),
+                  ),
                 ],
               ),
               if (towing) ...[
@@ -453,5 +481,4 @@ class RequestInformation extends StatelessWidget {
       ),
     ],
   );
-
 }
