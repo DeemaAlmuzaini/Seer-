@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'registration_requests_list_screen.dart';
 import 'complaints.dart';
 import 'users.dart';
+import '../widgets/app_snackbar.dart';
 
 class AdminMain extends StatefulWidget {
   const AdminMain({super.key});
@@ -95,11 +96,8 @@ _buildMenuItem(
                         await FirebaseAuth.instance.signOut();
 
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('تم تسجيل الخروج بنجاح'),
-                            ),
-                          );
+                          showAppMessage(context, 'تم تسجيل الخروج بنجاح',
+                              type: AppMessageType.success);
                         }
                       },
                       icon: const Icon(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
 import '../theme/app_colors.dart';
+import '../widgets/app_snackbar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -46,21 +47,20 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      _showMessage('اكتب بريد الإدارة الإلكتروني أولاً.');
+      _showMessage('اكتب بريد الإدارة الإلكتروني أولاً.', type: AppMessageType.warning);
       return;
     }
     try {
       await _authService.sendPasswordResetEmail(email);
-      _showMessage('تم إرسال رابط إعادة تعيين كلمة المرور.');
+      _showMessage('تم إرسال رابط إعادة تعيين كلمة المرور.', type: AppMessageType.success);
     } on AuthException catch (error) {
       _showMessage(error.message);
     }
   }
 
-  void _showMessage(String message) {
+  void _showMessage(String message, {AppMessageType type = AppMessageType.error}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    showAppMessage(context, message, type: type);
   }
 
   // ---------- UI helpers ----------
