@@ -102,6 +102,25 @@ void clearDropoffLocation() {
     dropoffLocation = order.dropoffLocation;
   }
 
+  /// Fills this draft from the AI assistant's suggestion, so the customer
+  /// can check and change everything on the request page.
+  ///
+  /// Parameters: [optionId] is the suggested service option; [note] is the
+  /// problem description; [pickup] and [dropoff] are the locations the
+  /// assistant already knows, when there are any.
+  /// Returns: nothing.
+  void prefillFromSuggestion({
+    required String optionId,
+    String note = '',
+    GeoPoint? pickup,
+    GeoPoint? dropoff,
+  }) {
+    selectedOptionId = optionId;
+    this.note = note;
+    if (pickup != null) pickupLocation = pickup;
+    if (dropoff != null) dropoffLocation = dropoff;
+  }
+
   ServiceCategory? get category => ServiceCatalog.categoryById(categoryId);
  
   ServiceOption? get selectedOption => selectedOptionId == null
@@ -197,6 +216,8 @@ String? validate() {
   /// 'pending' and no provider. Matching it to the nearest provider, and the
   /// 2-minute response window, happen after this point.
   Future<String?> submit() async {
+    /** Prevents repeated taps from submitting the same draft concurrently. */
+    if (isSubmitting) return 'الطلب قيد الإرسال، يرجى الانتظار.';
     final problem = validate();
     if (problem != null) return problem;
  

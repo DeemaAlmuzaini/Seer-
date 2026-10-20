@@ -4,6 +4,7 @@ import '../../controllers/order_draft_controller.dart';
 import '../../controllers/location_controller.dart';
 import '../../theme/app_colors.dart';
 import '../../models/order.dart';
+import '../../services/ai_assistant.dart';
 import '../../models/pricing_model.dart';
 import '../../models/service_catalog.dart';
 import '../../widgets/vehicle_picker_sheet.dart';
@@ -26,6 +27,7 @@ class RequestServicePage extends StatefulWidget {
     required this.categoryId,
     this.preferredVehicleId,
     this.reorderFrom,
+    this.suggestion,
   });
 
   final String uid;
@@ -39,6 +41,34 @@ class RequestServicePage extends StatefulWidget {
   /// The rejected or auto-cancelled order this request is copied from, or
   /// null for a brand-new request (#21).
   final ServiceOrder? reorderFrom;
+
+  /// The service the AI assistant suggested in the chat, or null when the
+  /// customer came from the home page.
+  final OrderSummary? suggestion;
+
+  /// Opens the request form filled with the service the AI assistant
+  /// suggested. The customer can change anything before sending.
+  ///
+  /// Parameters: [context] to navigate from, the customer's [uid] and the
+  /// assistant's [summary].
+  /// Returns: a future that completes when the page is closed, with the
+  /// success message if the order was sent.
+  static Future<String?> fromSuggestion(
+    BuildContext context, {
+    required String uid,
+    required OrderSummary summary,
+  }) {
+    return Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(
+        builder: (_) => RequestServicePage(
+          uid: uid,
+          categoryId: summary.categoryId,
+          preferredVehicleId: summary.vehicle.id,
+          suggestion: summary,
+        ),
+      ),
+    );
+  }
 
   /// Opens the request form filled with the data of an earlier order (#21).
   ///
@@ -92,6 +122,17 @@ class _RequestServicePageState extends State<RequestServicePage> {
       _controller.prefillFromOrder(source);
       _note.text = source.note;
     }
+    final suggestion = widget.suggestion;
+    if (suggestion != null) {
+      // Suggested by the AI chat: start from what the assistant chose.
+      _controller.prefillFromSuggestion(
+        optionId: suggestion.optionId,
+        note: suggestion.note,
+        pickup: suggestion.pickupLocation,
+        dropoff: suggestion.dropoffLocation,
+      );
+      _note.text = suggestion.note;
+    }
     _controller.loadVehicles();
     _controller.loadPrices();
   }
@@ -140,8 +181,22 @@ class _RequestServicePageState extends State<RequestServicePage> {
       ),
     );
     if (!mounted || sentMessage == null) return;
-    // The order was sent: close this page too and let the home page report it.
-    Navigator.of(context).pop(sentMessage);
+    /**
+     * The AI chat needs the created order ID to switch its suggestion card
+     * to "sent" and open that order. Normal service requests still return
+     * the existing success message, preserving other callers' behavior.
+     */
+    if (widget.suggestion != null) {
+      final orderId = _controller.createdOrderId;
+      if (orderId == null || orderId.isEmpty) {
+        _showMessage('تعذر فتح الطلب الجديد. تحقق من قائمة الطلبات.',
+            type: AppMessageType.warning);
+        return;
+      }
+      Navigator.of(context).pop(orderId);
+    } else {
+      Navigator.of(context).pop(sentMessage);
+    }
   }
 
   void _showMessage(String text, {AppMessageType type = AppMessageType.success}) {

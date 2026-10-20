@@ -121,6 +121,21 @@ class ChatController extends ChangeNotifier {
       return true;
     }
 
+    /**
+     * Synchronizes a manually submitted request with the assistant and chat.
+     * The assistant must clear its pending confirmation too, otherwise a
+     * later chat confirmation could create a second order for the same card.
+     */
+    void markSummarySent(String summaryId, String orderId) {
+      final card = _summaryCard(summaryId);
+      if (card == null || card.summaryState != SummaryState.waiting ||
+          orderId.isEmpty) return;
+      card.summaryState = SummaryState.sent;
+      card.orderId = orderId;
+      _assistant.markSummarySent(summaryId);
+      _notify();
+    }
+
     ///Starts a new conversation
     void reset(){
       if(isBusy) return;
