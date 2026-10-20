@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/blur_validated.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
@@ -254,7 +255,6 @@ class _CustomerRegistrationScreenState
           key: _formKey,
           // Each field is checked as soon as the user edits it, so a red
           // error disappears the moment the value becomes valid.
-          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
             child: Column(
@@ -311,7 +311,7 @@ class _CustomerRegistrationScreenState
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _fieldLabel('الاسم الأول'),
-                          TextFormField(
+                          BlurTextFormField(
                             controller: _firstNameController,
                             textInputAction: TextInputAction.next,
                             decoration: _fieldDecoration(
@@ -330,7 +330,7 @@ class _CustomerRegistrationScreenState
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _fieldLabel('اسم العائلة'),
-                          TextFormField(
+                          BlurTextFormField(
                             controller: _lastNameController,
                             textInputAction: TextInputAction.next,
                             decoration: _fieldDecoration(
@@ -349,7 +349,7 @@ class _CustomerRegistrationScreenState
 
                 // Phone
                 _fieldLabel('رقم الجوال'),
-                TextFormField(
+                BlurTextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   textDirection: TextDirection.ltr,
@@ -368,7 +368,7 @@ class _CustomerRegistrationScreenState
 
                 // Email
                 _fieldLabel('البريد الإلكتروني'),
-                TextFormField(
+                BlurTextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textDirection: TextDirection.ltr,
@@ -383,7 +383,7 @@ class _CustomerRegistrationScreenState
 
                 // Password
                 _fieldLabel('كلمة المرور'),
-                TextFormField(
+                BlurTextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   textDirection: TextDirection.ltr,
@@ -405,7 +405,7 @@ class _CustomerRegistrationScreenState
 
                 // Confirm password
                 _fieldLabel('تأكيد كلمة المرور'),
-                TextFormField(
+                BlurTextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirm,
                   textDirection: TextDirection.ltr,

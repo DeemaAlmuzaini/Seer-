@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/blur_validated.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_material_design_icons/flutter_material_design_icons.dart';
@@ -911,7 +912,7 @@ class _ProviderRegistrationScreenState
             Expanded(
               child: _labeled(
                 'الاسم الأول',
-                TextFormField(
+                BlurTextFormField(
                   controller: _firstNameController,
                   decoration: _fieldDecoration(''),
                   textInputAction: TextInputAction.next,
@@ -928,7 +929,7 @@ class _ProviderRegistrationScreenState
             Expanded(
               child: _labeled(
                 'اسم العائلة',
-                TextFormField(
+                BlurTextFormField(
                   controller: _lastNameController,
                   decoration: _fieldDecoration(''),
                   textInputAction: TextInputAction.next,
@@ -946,7 +947,7 @@ class _ProviderRegistrationScreenState
         const SizedBox(height: 16),
         _labeled(
           'رقم الهوية / الإقامة',
-          TextFormField(
+          BlurTextFormField(
             controller: _nationalIdController,
             keyboardType: TextInputType.number,
             textDirection: TextDirection.ltr,
@@ -967,7 +968,7 @@ class _ProviderRegistrationScreenState
         const SizedBox(height: 16),
         _labeled(
           'رقم الجوال',
-          TextFormField(
+          BlurTextFormField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
             textDirection: TextDirection.ltr,
@@ -985,7 +986,7 @@ class _ProviderRegistrationScreenState
         const SizedBox(height: 16),
         _labeled(
           'البريد الإلكتروني',
-          TextFormField(
+          BlurTextFormField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             textDirection: TextDirection.ltr,
@@ -1009,7 +1010,7 @@ class _ProviderRegistrationScreenState
         const SizedBox(height: 16),
         _labeled(
           'كلمة المرور',
-          TextFormField(
+          BlurTextFormField(
             controller: _passwordController,
             obscureText: _obscurePassword,
             textDirection: TextDirection.ltr,
@@ -1030,7 +1031,7 @@ class _ProviderRegistrationScreenState
         const SizedBox(height: 16),
         _labeled(
           'تأكيد كلمة المرور',
-          TextFormField(
+          BlurTextFormField(
             controller: _confirmPasswordController,
             obscureText: _obscureConfirm,
             textDirection: TextDirection.ltr,
@@ -1089,7 +1090,7 @@ class _ProviderRegistrationScreenState
         _vehicleTypeDropdown(),
         if (_selectedVehicleType?['label'] == 'أخرى') ...[
           const SizedBox(height: 12),
-          TextFormField(
+          BlurTextFormField(
             controller: _otherVehicleTypeController,
             decoration: _fieldDecoration('حدد نوع المركبة'),
             textInputAction: TextInputAction.next,
@@ -1107,7 +1108,7 @@ class _ProviderRegistrationScreenState
         _brandDropdown(),
         if (_selectedBrand == 'أخرى') ...[
           const SizedBox(height: 12),
-          TextFormField(
+          BlurTextFormField(
             controller: _otherBrandController,
             decoration: _fieldDecoration('حدد الماركة'),
             textInputAction: TextInputAction.next,
@@ -1125,7 +1126,7 @@ class _ProviderRegistrationScreenState
         _colorDropdown(),
         if (_selectedColor == 'أخرى') ...[
           const SizedBox(height: 12),
-          TextFormField(
+          BlurTextFormField(
             controller: _otherColorController,
             decoration: _fieldDecoration('حدد اللون'),
             textInputAction: TextInputAction.next,
@@ -1143,7 +1144,7 @@ class _ProviderRegistrationScreenState
         _modelDropdown(),
         if (_selectedModel == kOtherOption) ...[
           const SizedBox(height: 12),
-          TextFormField(
+          BlurTextFormField(
             controller: _otherModelController,
             decoration: _fieldDecoration('حدد الموديل'),
             textInputAction: TextInputAction.next,
@@ -1166,7 +1167,14 @@ class _ProviderRegistrationScreenState
           style: TextStyle(fontSize: 12, color: AppColors.secondaryText),
         ),
         const SizedBox(height: 10),
-        PlateNumberField(navy: AppColors.navy, key: _plateFieldKey),
+        PlateNumberField(
+          navy: AppColors.navy,
+          key: _plateFieldKey,
+          // Hide the red plate error as soon as the user edits the plate.
+          onChanged: (_) {
+            if (_plateError) setState(() => _plateError = false);
+          },
+        ),
         if (_plateError)
           const Padding(
             padding: EdgeInsets.only(top: 6),
@@ -1178,7 +1186,7 @@ class _ProviderRegistrationScreenState
         const SizedBox(height: 16),
         _labeled(
           'رقم الرخصة / التصريح',
-          TextFormField(
+          BlurTextFormField(
             controller: _licenseNumberController,
             keyboardType: TextInputType.number,
             textDirection: TextDirection.ltr,
@@ -1390,8 +1398,6 @@ class _ProviderRegistrationScreenState
                             maintainState: true,
                             child: Form(
                               key: _personalFormKey,
-                              autovalidateMode:
-                                  AutovalidateMode.onUserInteraction,
                               child: _personalStep(),
                             ),
                           ),
@@ -1400,8 +1406,6 @@ class _ProviderRegistrationScreenState
                             maintainState: true,
                             child: Form(
                               key: _vehicleFormKey,
-                              autovalidateMode:
-                                  AutovalidateMode.onUserInteraction,
                               child: _vehicleStep(),
                             ),
                           ),

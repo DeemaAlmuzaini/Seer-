@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/blur_validated.dart';
 
 import '../../controllers/vehicle_controller.dart';
 import '../../theme/app_colors.dart'; 
@@ -415,11 +416,10 @@ class _VehicleFormPageState extends State<VehicleFormPage> {
     required String hint,
     required bool enabled,
   }) {
-    return TextFormField(
+    return BlurTextFormField(
       controller: controller,
       enabled: enabled,
       validator: VehicleController.validateCustomValue,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
       textInputAction: TextInputAction.next,
       style: _inputStyle(context),
       decoration: _decoration(hint: hint),

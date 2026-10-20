@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/blur_validated.dart';
 import 'package:flutter/gestures.dart';
 
 import '../config/app_config.dart';
@@ -135,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 36),
                   _fieldLabel('البريد الإلكتروني'),
-                  TextFormField(
+                  BlurTextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     textDirection: TextDirection.ltr,
@@ -154,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
                   _fieldLabel('كلمة المرور'),
-                  TextFormField(
+                  BlurTextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     textDirection: TextDirection.ltr,
