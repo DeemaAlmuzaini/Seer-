@@ -85,7 +85,23 @@ class AuthService {
   /// Sends a password reset link to the user's email.
   Future<void> sendPasswordResetEmail(String email) async {
     try {
-      await _auth.sendPasswordResetEmail(email: email.trim());
+      /** Confirm that the email belongs to this app before sending its reset link. */
+      final profiles = await _firestore.collection('customers')
+          .where('email', isEqualTo: email.trim())
+          .limit(1)
+          .get(const GetOptions(source: Source.server));
+      if (profiles.docs.isEmpty) {
+        throw AuthException('هذا البريد ليس لحساب العميل. يرجى استخدام التطبيق المخصص لهذا الحساب.');
+      }
+      await _auth.sendPasswordResetEmail(
+        email: email.trim(),
+        actionCodeSettings: ActionCodeSettings(
+          url: 'https://seer-8fd7c.firebaseapp.com/reset-password',
+          handleCodeInApp: true,
+          androidPackageName: 'com.swe444.seer',
+          androidInstallApp: false,
+        ),
+      );
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapError(e.code));
     }
