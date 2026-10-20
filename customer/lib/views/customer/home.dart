@@ -4,6 +4,7 @@ import '../../theme/app_colors.dart';
 import '../../models/service_catalog.dart';
 import 'request_service_page.dart';
 import 'ai_chat_page.dart';
+import '../../widgets/app_snackbar.dart';
 
 /// VIEW: the customer home page.
 class Home extends StatelessWidget {
@@ -28,7 +29,7 @@ class Home extends StatelessWidget {
       ),
     );
     if (message == null || !context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    showAppMessage(context, message, type: AppMessageType.success);
     onOrderSent?.call();
   }
 

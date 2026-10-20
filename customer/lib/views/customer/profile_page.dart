@@ -8,6 +8,7 @@ import '../../models/vehicle.dart';
 import 'edit_profile_page.dart';
 import 'vehicle_form_page.dart';
 import 'vehicles_page.dart';
+import '../../widgets/app_snackbar.dart';
 
 /// VIEW: customer profile (user story #5) + entry points to edit (#6),
 /// vehicles (#7–#10) and logout (#3).
@@ -70,7 +71,7 @@ class _ProfilePageState extends State<ProfilePage> {
       debugPrint('🟢 signOut finished successfully');
     } catch (e) {
       debugPrint('🔴 signOut threw an error: $e');
-      if (mounted) _showMessage('خطأ: $e');
+      if (mounted) _showMessage('خطأ: $e', type: AppMessageType.error);
       return;
     }
 
@@ -125,8 +126,8 @@ class _ProfilePageState extends State<ProfilePage> {
     return result ?? false;
   }
 
-  void _showMessage(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  void _showMessage(String text, {AppMessageType type = AppMessageType.success}) {
+    showAppMessage(context, text, type: type);
   }
 
   // ---------------- UI ----------------

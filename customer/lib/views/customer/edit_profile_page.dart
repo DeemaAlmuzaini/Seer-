@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../controllers/profile_controller.dart';
 import '../../theme/app_colors.dart'; 
 import '../../models/customer.dart';
+import '../../widgets/app_snackbar.dart';
  
 /// VIEW: edit personal information (user story #6).
 /// The email is shown but cannot be edited.
@@ -52,8 +53,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (error == null) {
       Navigator.of(context).pop(true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
-    }
+      showAppMessage(context, error);
+          }
   }
  
   @override
