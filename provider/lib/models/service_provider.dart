@@ -7,6 +7,19 @@ const Map<String, List<String>> allServiceBranches = {
   'السطحة': ['عادية', 'هيدروليك'],
 };
 
+/// Vehicle types that cannot physically tow another vehicle. Providers with
+/// one of these never see the towing (السطحة) service. Any other type
+/// (سطحة, أخرى or a typed-in type) can offer it.
+const Set<String> kNonTowingVehicleTypes = {
+  'سيدان',
+  'دفع رباعي',
+  'بيك أب',
+  'فان',
+};
+
+bool vehicleTypeCanTow(String vehicleType) =>
+    !kNonTowingVehicleTypes.contains(vehicleType.trim());
+
 const Map<String, String> _serviceOptionToBranch = {
   'activation'  : 'شحن',
   'replace'     : 'تبديل',
@@ -103,6 +116,7 @@ class ServiceProviderData{
   final String vehicleBrand;
   final String vehicleModel;
   final String vehicle;
+  final String vehicleType;
 
   final String plateNumberArabic;
   final String plateNumberLatin;
@@ -123,6 +137,7 @@ class ServiceProviderData{
     // Defaults keep existing ServiceProviderData constructors working.
     this.vehicleBrand = '',
     this.vehicleModel = '',
+    this.vehicleType = '',
     required this.vehicle,
 
     required this.plateNumberArabic,
@@ -145,6 +160,7 @@ class ServiceProviderData{
 
       vehicleBrand: map['vehicleBrand'] ?? '',
       vehicleModel: map['vehicleModel'] ?? '',
+      vehicleType: map['vehicleType'] ?? '',
       vehicle: '${map['vehicleBrand'] ?? ''} ${map['vehicleModel'] ?? ''}'.trim(),
 
       plateNumberArabic: map['plateNumberArabic'] ?? '',

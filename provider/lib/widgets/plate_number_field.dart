@@ -229,6 +229,16 @@ class PlateNumberValue {
   });
 }
 
+/// Error shown for an incomplete plate (null = the plate is fine).
+/// Same wording as the customer app.
+String? plateErrorMessage(PlateNumberValue plate) {
+  if (plate.digits.isEmpty) return 'أدخل أرقام اللوحة';
+  if (plate.digits.length > 4) return 'من 1 إلى 4 أرقام';
+  if (plate.arabicLetters.isEmpty) return 'أدخل حروف اللوحة';
+  if (plate.arabicLetters.length != 3) return 'أدخل 3 حروف للوحة';
+  return null;
+}
+
 // ============================================================
 // Shared visual constants
 // ============================================================

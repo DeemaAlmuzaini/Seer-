@@ -152,6 +152,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                         email : widget.provider.email,
                         nationalId : widget.provider.nationalId,
+                        vehicleType: widget.provider.vehicleType,
                         vehicle : widget.provider.vehicle,
                         plateNumberArabic : widget.provider.plateNumberArabic,
                         plateNumberLatin : widget.provider.plateNumberLatin, 
