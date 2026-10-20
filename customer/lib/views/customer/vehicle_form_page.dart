@@ -5,6 +5,7 @@ import '../../theme/app_colors.dart';
 import '../../models/lookup_model.dart';
 import '../../models/vehicle.dart';
 import '../../widgets/plate_number_field.dart';
+import '../../widgets/app_snackbar.dart';
 
 /// VIEW: add a vehicle (#7), or edit (#9) / delete (#10) an existing one.
 /// Pops with a success message to show, or null if nothing changed.
@@ -178,7 +179,7 @@ class _VehicleFormPageState extends State<VehicleFormPage> {
   }
 
   void _showMessage(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    showAppMessage(context, text);
   }
 
   // ---------------- UI ----------------

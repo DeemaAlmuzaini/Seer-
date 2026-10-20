@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../controllers/customer_orders_controller.dart';
 import '../models/order.dart';
 import '../theme/app_colors.dart';
+import 'app_snackbar.dart';
 
 /// Cancel bar pinned to the bottom of the order details (#20). It is
 /// shown while the order is waiting for a provider, and for a short time
@@ -276,8 +277,7 @@ class _CancelOrderSectionState extends State<CancelOrderSection> {
     if (!mounted) return;
     setState(() => _cancelling = false);
     if (error != null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error)));
+      showAppMessage(context, error);
     }
   }
 

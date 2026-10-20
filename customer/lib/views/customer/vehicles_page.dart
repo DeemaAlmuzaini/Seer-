@@ -4,6 +4,7 @@ import '../../controllers/vehicle_controller.dart';
 import '../../theme/app_colors.dart'; 
 import '../../models/vehicle.dart';
 import 'vehicle_form_page.dart';
+import '../../widgets/app_snackbar.dart';
 
 /// VIEW: list of the customer's vehicles (user story #8).
 /// Tap a vehicle to edit or delete it (#9, #10); the bottom button adds one (#7).
@@ -40,7 +41,7 @@ class _VehiclesPageState extends State<VehiclesPage> {
     );
     if (message == null || !mounted) return;
     _controller.load();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    showAppMessage(context, message, type: AppMessageType.success);
   }
 
   @override

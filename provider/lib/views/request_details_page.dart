@@ -8,6 +8,7 @@ import '../widgets/location_card.dart';
 import '../widgets/order_display.dart';
 import '../widgets/plate_number_view.dart';
 import '../widgets/request_actions.dart';
+import '../widgets/app_snackbar.dart';
 
 /// Live request details; customer contact information is not rendered here.
 class RequestDetailsPage extends StatelessWidget {
@@ -121,8 +122,7 @@ class RequestDetailsPage extends StatelessWidget {
                         },
                         onError: (message) {
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(SnackBar(content: Text(message)));
+                            showAppMessage(context, message);
                           }
                         },
                       ),

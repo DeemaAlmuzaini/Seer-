@@ -36,6 +36,11 @@ class ProviderRequestsController extends ChangeNotifier {
   bool loading = true;
   bool locating = false;
   String? _error;
+  bool _errorIsLocation = false;
+
+  /// True when the last error is about GPS (service off or permission
+  /// denied). The provider can fix it, so the view shows it as a warning.
+  bool get lastErrorIsLocation => _errorIsLocation;
   static const unavailableMessage = 'هذا الطلب لم يعد متاحاً.';
 
   /// Takes no inputs; returns available orders sorted by their shared deadline.
@@ -111,6 +116,7 @@ class ProviderRequestsController extends ChangeNotifier {
     if (providerId.isEmpty) {
       loading = false;
       _error = 'سجّل الدخول لعرض الطلبات المتاحة.';
+      _errorIsLocation = false;
       _notify();
       return;
     }
@@ -129,6 +135,7 @@ class ProviderRequestsController extends ChangeNotifier {
             if (_disposed) return;
             _orders.clear();
             loading = false;
+            _errorIsLocation = false;
             _error =
                 'تعذر تحميل الطلبات. تحقق من الاتصال والصلاحيات وحاول مجدداً.';
             _notify();
@@ -158,12 +165,14 @@ class ProviderRequestsController extends ChangeNotifier {
         onError: (Object error) {
           _position = null;
           _error = 'تعذر تحديث موقعك. حاول تحديث المسافة مجدداً.';
+          _errorIsLocation = true;
           _notify();
         },
       );
     } catch (error) {
       if (_disposed) return;
       _position = null;
+      _errorIsLocation = error is StateError;
       _error = error is StateError
           ? error.message.toString()
           : 'تعذر تحديد موقعك. حاول تحديث المسافة مجدداً.';

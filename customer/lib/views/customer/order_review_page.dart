@@ -9,6 +9,7 @@ import '../../models/pricing_model.dart';
 import '../../widgets/vehicle_picker_sheet.dart';
 import '../../widgets/no_provider_dialog.dart';
 import '../../widgets/location_card.dart';
+import '../../widgets/app_snackbar.dart';
 
 /// VIEW: the order details before it is sent (#17).
 /// Everything here is read-only except the vehicle, which can still be
@@ -48,7 +49,7 @@ class _OrderReviewPageState extends State<OrderReviewPage> {
         return;
       }
       // Any other problem (missing location, no internet...).
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      showAppMessage(context, error, type: AppMessageType.warning);
       return;
     }
     final orderId = _controller.createdOrderId;

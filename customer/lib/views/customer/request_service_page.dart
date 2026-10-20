@@ -12,6 +12,7 @@ import 'vehicle_form_page.dart';
 import 'location_picker_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
+import '../../widgets/app_snackbar.dart';
 
 /// VIEW: build a service request.
 /// Choose the service option (#13), the vehicle (#14) and an optional note
@@ -129,7 +130,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
 
     final problem = _controller.validate();
     if (problem != null) {
-      _showMessage(problem);
+      _showMessage(problem, type: AppMessageType.warning);
       return;
     }
 
@@ -143,8 +144,8 @@ class _RequestServicePageState extends State<RequestServicePage> {
     Navigator.of(context).pop(sentMessage);
   }
 
-  void _showMessage(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  void _showMessage(String text, {AppMessageType type = AppMessageType.success}) {
+    showAppMessage(context, text, type: type);
   }
 
   /// Opens the shared map screen to select the vehicle's pickup location.

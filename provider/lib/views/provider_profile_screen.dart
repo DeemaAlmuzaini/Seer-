@@ -9,7 +9,7 @@ import '../models/service_provider.dart';
 import '../controllers/provider_profile_controller.dart';
 
 export '../models/service_provider.dart';
-
+import '../widgets/app_snackbar.dart';
 
 
 
@@ -59,9 +59,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen>{
     if (uid == null) return;
     final error = await _controller.saveUpdates(uid, updates, updated);
     if (error != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      showAppMessage(context, error);
     }
   }//end _saveProviderUpdates
  

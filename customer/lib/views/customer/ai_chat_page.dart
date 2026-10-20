@@ -8,6 +8,7 @@ import '../../widgets/chat_input_bar.dart';
 import 'dart:typed_data';
 import '../../widgets/image_attach_button.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import '../../widgets/app_snackbar.dart';
 
 ///VIEW: the Ai assistant chat 
 /// opened from the AI card in the homw page
@@ -131,9 +132,7 @@ Future<void> _onImageSelected(XFile image) async {
 
     if (!supportedFormats.contains(extension)) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('نوع الصورة غير مدعوم')),
-      );
+      showAppMessage(context, 'نوع الصورة غير مدعوم', type: AppMessageType.warning);
       return;
     }
 
@@ -159,11 +158,7 @@ Uint8List compressed = bytes;
 
       if (compressed.length > maxSize) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تعذر تصغير الصورة إلى أقل من 7 ميجابايت'),
-          ),
-        );
+        showAppMessage(context, 'تعذر تصغير الصورة إلى أقل من 7 ميجابايت');
         return;
       }
 
@@ -182,9 +177,7 @@ setState(() {
     debugPrint('Image processing failed: $e');
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('تعذر معالجة الصورة، حاول مرة أخرى')),
-    );
+    showAppMessage(context, 'تعذر معالجة الصورة، حاول مرة أخرى');
   }
 }
 

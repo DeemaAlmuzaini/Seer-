@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../controllers/notification_controller.dart';
 import '../models/app_notification.dart';
 import '../theme/app_colors.dart';
+import '../widgets/app_snackbar.dart';
 
 /// The provider's notifications list (#47).
 ///
@@ -36,9 +37,7 @@ class _ProviderNotificationsState extends State<ProviderNotifications> {
 
   void _open(AppNotification notification) {
     if (!notification.isActive(DateTime.now())) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('هذا الطلب لم يعد متاحاً.')),
-      );
+      showAppMessage(context, 'هذا الطلب لم يعد متاحاً.', type: AppMessageType.info);
       return;
     }
     Navigator.of(context).pop(true);

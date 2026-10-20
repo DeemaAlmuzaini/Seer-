@@ -8,6 +8,7 @@ import 'available_requests.dart';
 import 'current_order.dart';
 import 'history.dart';
 import 'request_details_page.dart';
+import '../widgets/app_snackbar.dart';
 
 /// Provider requests, accepted work and previous orders in one place.
 class ProviderOrders extends StatefulWidget {
@@ -66,12 +67,16 @@ class _ProviderOrdersState extends State<ProviderOrders>
 
   /// Takes no inputs; shows each controller error once after the current frame.
   void _showError() {
+    final isLocation = _requests.lastErrorIsLocation;
     final error = _requests.takeError();
     if (error == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error)));
+        showAppMessage(
+          context,
+          error,
+          type: isLocation ? AppMessageType.warning : AppMessageType.error,
+        );      
       }
     });
   }

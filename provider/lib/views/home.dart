@@ -6,6 +6,7 @@ import '../controllers/provider_availability_controller.dart';
 import '../controllers/provider_stats_controller.dart';
 import '../controllers/provider_requests_controller.dart';
 import '../models/order.dart';
+import '../widgets/app_snackbar.dart';
 import '../theme/order_colors.dart';
 import '../widgets/order_display.dart';
 
@@ -82,9 +83,7 @@ class _ProviderHomeState extends State<ProviderHome> {
         isLoadingAvailability = false;
       });
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('تعذر تحميل حالة التوفر')));
+      showAppMessage(context, 'تعذر تحميل حالة التوفر');
     }
   }
 
@@ -106,15 +105,14 @@ class _ProviderHomeState extends State<ProviderHome> {
     } catch (error) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            error is StateError
-                ? error.message.toString()
-                : 'تعذر حفظ حالة التوفر',
-          ),
-        ),
-      );
+      if (error is StateError) {
+        // Location is off or not allowed: something the provider can fix.
+        showAppMessage(context, error.message.toString(),
+            type: AppMessageType.warning);
+      } else {
+        showAppMessage(context, 'تعذر حفظ حالة التوفر');
+      }
+      
     } finally {
       if (mounted) {
         setState(() => isSavingAvailability = false);
