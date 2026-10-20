@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import 'provider_profile_screen.dart';
-
+import '../controllers/provider_registration_controller.dart';
+import 'provider_registration_screen.dart' show ProviderSaudiPhoneInputFormatter;
 
 class EditProfileScreen extends StatefulWidget{
   final ServiceProviderData provider;
@@ -91,7 +92,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                    if(value == null || value.trim().isEmpty){
                   return 'اسم العائلة مطلوب';
                 }//end if
-                 return null;
+                 return null;                  
                  },//end validator
                   ),
 
@@ -101,16 +102,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   controller: phoneController,
                   decoration: const InputDecoration(
                     labelText: 'رقم الجوال',
+                    hintText: '05XXXXXXXX',
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.phone,
-                  validator: (value){
-                    if(value == null || value.trim().isEmpty){
-                      return 'رقم الجوال مطلوب';
-                    }//end if
-                    return null;
-                  },//validator
+                  textDirection: TextDirection.ltr,
+                  // Same rules as registration: digits only, starts with 05, max 10.
+                  inputFormatters: [ProviderSaudiPhoneInputFormatter()],
+                  validator: ProviderRegistrationController.validatePhone,
                 ),
+
                 const SizedBox(height: 14),
 
                 TextFormField(
@@ -145,7 +146,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       final updatedProvider = ServiceProviderData(
                         firstName: firstNameController.text,
                         lastName: lastNameController.text,
-                        phone : phoneController.text,
+                        phone : ProviderRegistrationController.normalizeDigits(
+                          phoneController.text.trim(),
+                        ),
                         email : widget.provider.email,
                         nationalId : widget.provider.nationalId,
                         vehicle : widget.provider.vehicle,

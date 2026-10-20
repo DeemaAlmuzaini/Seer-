@@ -58,8 +58,12 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen>{
     final uid = _authService.currentUser?.uid;
     if (uid == null) return;
     final error = await _controller.saveUpdates(uid, updates, updated);
-    if (error != null && mounted) {
+    if (!mounted) return;
+    if (error != null) {
       showAppMessage(context, error);
+    } else {
+      showAppMessage(context, 'تم حفظ التغييرات بنجاح',
+          type: AppMessageType.success);
     }
   }//end _saveProviderUpdates
  
@@ -148,15 +152,15 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen>{
                   );        
 
                   if(updated != null && mounted){
-  await _saveProviderUpdates({
-    'vehicleBrand' : updated.vehicleBrand,
-    'vehicleModel' : updated.vehicleModel,
-    'vehicleColor' : updated.vehicleColor,
-    'plateNumberArabic' : updated.plateNumberArabic,
-    'plateNumberLatin' : updated.plateNumberLatin,
-    'licenseNumber' : updated.licenseNumber,
-  }, updated);
-}
+                    await _saveProviderUpdates({
+                      'vehicleBrand' : updated.vehicleBrand,
+                      'vehicleModel' : updated.vehicleModel,
+                      'vehicleColor' : updated.vehicleColor,
+                      'plateNumberArabic' : updated.plateNumberArabic,
+                      'plateNumberLatin' : updated.plateNumberLatin,
+                      'licenseNumber' : updated.licenseNumber,
+                    }, updated);
+                  }
                 },
               ),
 
