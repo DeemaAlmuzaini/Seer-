@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/blur_validated.dart';
  
 import '../../controllers/profile_controller.dart';
 import '../../theme/app_colors.dart'; 
@@ -175,13 +176,12 @@ class _LabeledField extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          TextFormField(
+          BlurTextFormField(
             controller: controller,
             validator: validator,
             keyboardType: keyboardType,
             textDirection: ltr ? TextDirection.ltr : null,
             textInputAction: TextInputAction.next,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
             style: const TextStyle(fontSize: 15, color: CustomerColors.primaryText),
             decoration: InputDecoration(
               hintText: hint,

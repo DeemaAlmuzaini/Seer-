@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/blur_validated.dart';
 import '../theme/app_colors.dart';
 import 'provider_profile_screen.dart';
 import '../controllers/provider_registration_controller.dart';
@@ -66,7 +67,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
 
-                TextFormField(
+                BlurTextFormField(
                   controller: firstNameController,
                   decoration: const InputDecoration(
                     labelText: 'الاسم الأول',
@@ -82,7 +83,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                 const SizedBox(height: 14),
 
-                TextFormField(
+                BlurTextFormField(
                   controller: lastNameController,
                   decoration: const InputDecoration(
                     labelText: 'اسم العائلة',
@@ -98,7 +99,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                 const SizedBox(height: 14),
 
-                TextFormField(
+                BlurTextFormField(
                   controller: phoneController,
                   decoration: const InputDecoration(
                     labelText: 'رقم الجوال',

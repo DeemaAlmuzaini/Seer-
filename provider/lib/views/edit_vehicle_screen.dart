@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/blur_validated.dart';
 import '../theme/app_colors.dart';
 import 'provider_profile_screen.dart';
 import '../widgets/plate_number_field.dart';
@@ -114,10 +115,11 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
         onChanged: options.isEmpty ? null : onChanged,
         validator: (selected) =>
             selected == null || selected.isEmpty ? requiredMessage : null,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
       ),
       if (value == kOtherOption) ...[
         const SizedBox(height: 10),
-        TextFormField(
+        BlurTextFormField(
           controller: other,
           decoration: InputDecoration(
             labelText: otherLabel,
@@ -173,7 +175,6 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
             padding: const EdgeInsets.all(18),
             child: Form(
               key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -243,6 +244,10 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                     navy: AppColors.navy,
                     initialDigits: _initialPlateDigits,
                     initialArabicLetters: _initialPlateArabicLetters,
+                    // Hide the red plate error as soon as the user edits the plate.
+                    onChanged: (_) {
+                      if (_plateError) setState(() => _plateError = false);
+                    },
                   ),
 
                   if (_plateError)
