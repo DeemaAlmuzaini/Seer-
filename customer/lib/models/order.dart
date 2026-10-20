@@ -32,6 +32,7 @@ class ServiceOrder {
     required this.customerId,
     required this.vehicleId,
     required this.vehicleTitle,
+    this.vehicleColor = '',
     required this.vehiclePlateArabic,
     required this.vehiclePlateLatin,
     required this.serviceCategoryId,
@@ -67,6 +68,7 @@ class ServiceOrder {
   // Vehicle (#14)
   final String vehicleId;
   final String vehicleTitle; // "تويوتا كامري 2022"
+  final String vehicleColor; // Snapshot of the customer vehicle color.
   final String vehiclePlateArabic;
   final String vehiclePlateLatin;
 
@@ -130,6 +132,7 @@ class ServiceOrder {
       customerPhone: (map['customerPhone'] ?? '') as String,
       vehicleId: (map['vehicleId'] ?? '') as String,
       vehicleTitle: (map['vehicleTitle'] ?? '') as String,
+      vehicleColor: (map['vehicleColor'] ?? '').toString(),
       vehiclePlateArabic: (map['vehiclePlateArabic'] ?? '') as String,
       vehiclePlateLatin: (map['vehiclePlateLatin'] ?? '') as String,
       serviceCategoryId: (map['serviceCategoryId'] ?? '') as String,
@@ -165,6 +168,7 @@ class ServiceOrder {
       'customerPhone': customerPhone,
       'vehicleId': vehicleId,
       'vehicleTitle': vehicleTitle,
+      'vehicleColor': vehicleColor,
       'vehiclePlateArabic': vehiclePlateArabic,
       'vehiclePlateLatin': vehiclePlateLatin,
       'serviceCategoryId': serviceCategoryId,

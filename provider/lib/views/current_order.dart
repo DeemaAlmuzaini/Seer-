@@ -6,6 +6,9 @@ import '../controllers/address_controller.dart';
 import '../widgets/location_card.dart';
 import '../models/order.dart';
 import '../theme/app_colors.dart';
+import '../theme/order_colors.dart';
+import '../widgets/order_display.dart';
+import '../widgets/plate_number_view.dart';
 import '../widgets/app_snackbar.dart';
 
 /// The order the provider is working on now (#42, #43), with the button
@@ -77,6 +80,7 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
                     Icons.person_outline,
                     order.customerName.isEmpty ? 'غير متوفر' : order.customerName,
                   ),
+                  const Divider(height: 22, color: AppColors.cardBorder),
                   _phoneRow(order.customerPhone),
                 ],
               ),
@@ -84,31 +88,58 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
               _section(
                 title: 'المركبة',
                 children: [
-                  _infoRow(Icons.directions_car_outlined, order.vehicleTitle),
-                  _infoRow(
-                    Icons.pin_outlined,
-                    '${order.vehiclePlateArabic}   ${order.vehiclePlateLatin}',
+                  _detailValueRow(
+                    'المركبة',
+                    order.vehicleTitle.trim().isEmpty
+                        ? 'غير محددة'
+                        : order.vehicleTitle,
+                  ),
+                  const Divider(height: 24, color: AppColors.cardBorder),
+                  _detailValueRow(
+                    'لون المركبة',
+                    order.vehicleColor.trim().isEmpty
+                        ? 'غير محدد'
+                        : order.vehicleColor.trim(),
+                  ),
+                  const Divider(height: 24, color: AppColors.cardBorder),
+                  const Text(
+                    'رقم اللوحة',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF4B5563),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: PlateNumberView.fromStored(
+                      arabic: order.vehiclePlateArabic,
+                      latin: order.vehiclePlateLatin,
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
-              _section(
-                title: 'الموقع',
-                children: [
-                  if (order.pickupLocation != null)
-                    LocationCard(
-                      pickup: order.pickupLocation!,
-                      dropoff: order.dropoffLocation,
-                      controller: _addresses,
-                    )
-                  else
-                    _infoRow(Icons.location_on_outlined, 'الموقع غير محدد'),
-                ],
-              ),
+              if (order.pickupLocation != null)
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: LocationCard(
+                    pickup: order.pickupLocation!,
+                    dropoff: order.dropoffLocation,
+                    controller: _addresses,
+                  ),
+                )
+              else
+                _section(title: 'الموقع', children: [
+                  _infoRow(Icons.location_on_outlined, 'الموقع غير محدد'),
+                ]),
               if (order.note.trim().isNotEmpty) ...[
                 const SizedBox(height: 12),
                 _section(
-                  title: 'ملاحظة العميل',
+                  title: 'ملاحظات العميل',
                   children: [_infoRow(Icons.notes_rounded, order.note.trim())],
                 ),
               ],
@@ -116,10 +147,8 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
               _section(
                 title: 'السعر',
                 children: [
-                  _infoRow(
-                    Icons.payments_outlined,
-                    _priceText(order.estimatedPrice),
-                  ),
+                  _detailValueRow('السعر التقديري',
+                      _priceText(order.estimatedPrice)),
                 ],
               ),
             ],
@@ -136,26 +165,28 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  order.serviceCategoryLabel,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.navy,
-                  ),
-                ),
-              ),
+              ServiceIconTile(categoryId: order.serviceCategoryId,
+                  status: order.status, size: 56),
+              const SizedBox(width: 12),
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(order.serviceCategoryLabel,
+                      style: const TextStyle(fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: CustomerColors.primaryText)),
+                  const SizedBox(height: 4),
+                  Text(order.serviceOptionLabel,
+                      style: const TextStyle(fontSize: 13,
+                          color: CustomerColors.secondaryText)),
+                ],
+              )),
               _statusChip(order.status),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            order.serviceOptionLabel,
-            style: const TextStyle(fontSize: 14, color: AppColors.secondaryText),
-          ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           _progressBar(order.status),
         ],
       ),
@@ -180,31 +211,47 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
     );
   }
 
-  /// Four steps: reached ones are filled blue, the rest are grey.
+  /// A single continuous track keeps every progress circle perfectly aligned.
   Widget _progressBar(String status) {
     final int current = CurrentOrderController.progressIndex(status);
     const List<String> steps = CurrentOrderController.progressSteps;
-    return Row(
+    const double circleSize = 26;
+    const double trackHeight = 3;
+
+    return Column(
       children: [
-        for (var i = 0; i < steps.length; i++)
-          Expanded(
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: 3,
-                        color: i == 0
-                            ? Colors.transparent
-                            : (i <= current
+        SizedBox(
+          height: circleSize,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Positioned.fill(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: circleSize / 2,
+                  ),
+                  child: Row(
+                    children: [
+                      for (var i = 0; i < steps.length - 1; i++)
+                        Expanded(
+                          child: Container(
+                            height: trackHeight,
+                            color: i < current
                                 ? AppColors.blue
-                                : AppColors.cardBorder),
-                      ),
-                    ),
+                                : AppColors.cardBorder,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  for (var i = 0; i < steps.length; i++)
                     Container(
-                      width: 26,
-                      height: 26,
+                      width: circleSize,
+                      height: circleSize,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: i <= current ? AppColors.blue : Colors.white,
@@ -219,20 +266,18 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
                           ? const Icon(Icons.check, size: 16, color: Colors.white)
                           : null,
                     ),
-                    Expanded(
-                      child: Container(
-                        height: 3,
-                        color: i == steps.length - 1
-                            ? Colors.transparent
-                            : (i < current
-                                ? AppColors.blue
-                                : AppColors.cardBorder),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var i = 0; i < steps.length; i++)
+              Expanded(
+                child: Text(
                   CurrentOrderController.statusLabels[steps[i]] ?? steps[i],
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -244,9 +289,9 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
                         i == current ? FontWeight.w700 : FontWeight.w400,
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+          ],
+        ),
       ],
     );
   }
@@ -275,7 +320,7 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.cardBorder),
       ),
@@ -303,6 +348,17 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
   }
 
   /// The customer's number with a button that opens the phone dialer.
+  Widget _detailValueRow(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(children: [
+      Expanded(child: Text(label, style: const TextStyle(
+          fontSize: 13, color: AppColors.secondaryText))),
+      Expanded(child: Text(value, textAlign: TextAlign.left,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
+              color: AppColors.navy))),
+    ]),
+  );
+
   Widget _phoneRow(String phone) {
     if (phone.isEmpty) return _infoRow(Icons.phone_outlined, 'غير متوفر');
     return Row(

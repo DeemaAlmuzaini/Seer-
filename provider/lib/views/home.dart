@@ -7,6 +7,8 @@ import '../controllers/provider_stats_controller.dart';
 import '../controllers/provider_requests_controller.dart';
 import '../models/order.dart';
 import '../widgets/app_snackbar.dart';
+import '../theme/order_colors.dart';
+import '../widgets/order_display.dart';
 
 class ProviderHome extends StatefulWidget {
   const ProviderHome({
@@ -348,126 +350,124 @@ class _ProviderHomeState extends State<ProviderHome> {
     ),
   );
 
+  // Customer-style summary with the original Home navigation and expiry logic.
   Widget _requestPreviewCard(ServiceOrder order) {
-    final price = order.estimatedPrice;
-    final priceText = price == null
-        ? 'السعر غير محدد'
-        : '${price.toString()} ر.س';
-    final vehicle = order.vehicleTitle.trim().isEmpty
-        ? 'مركبة غير محددة'
-        : order.vehicleTitle;
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         onTap: () {
           if (_requests.canRespond(order)) widget.onOpenRequest(order.id);
         },
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFDCE6F5)),
-            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: CustomerColors.cardBorder),
+            borderRadius: BorderRadius.circular(18),
           ),
-          child: Directionality(
-            textDirection: TextDirection.rtl,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    ServiceIconTile(
+                      categoryId: order.serviceCategoryId,
+                      status: order.status,
+                      size: 56,
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: Text(
-                        '${order.serviceCategoryLabel} - ${order.serviceOptionLabel}',
-                        style: const TextStyle(
-                          color: Color(0xFF0E1B33),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(order.serviceCategoryLabel,
+                              style: const TextStyle(fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: CustomerColors.primaryText)),
+                          const SizedBox(height: 2),
+                          Text(order.serviceOptionLabel,
+                              style: const TextStyle(fontSize: 12,
+                                  color: CustomerColors.secondaryText)),
+                          const SizedBox(height: 5),
+                          Text(OrderStatusStyle.labelOf(order.status),
+                              style: TextStyle(fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: OrderStatusStyle.textColorOf(order.status))),
+                          const SizedBox(height: 6),
+                          Text('${OrderFormat.date(order.createdAt)} · ${OrderFormat.time(order.createdAt)}',
+                              style: const TextStyle(fontSize: 12,
+                                  color: CustomerColors.secondaryText)),
+                          Text('رقم الطلب ${OrderFormat.reference(order.id)}',
+                              style: const TextStyle(fontSize: 12,
+                                  color: CustomerColors.secondaryText)),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      _requests.countdown(order),
-                      textDirection: TextDirection.ltr,
-                      style: const TextStyle(
-                        color: Color(0xFF1C63D6),
-                        fontWeight: FontWeight.w700,
-                        fontFeatures: [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  vehicle,
-                  style: const TextStyle(
-                    color: Color(0xFF69728C),
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: 18,
-                      color: Color(0xFF69728C),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
+                    // Match the price position in the available-requests card.
+                    Padding(
+                      padding: const EdgeInsets.only(top: 56),
                       child: Text(
-                        _requests.distanceText(order),
+                        OrderFormat.price(order.estimatedPrice),
                         style: const TextStyle(
-                          color: Color(0xFF69728C),
-                          fontSize: 13,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: CustomerColors.primaryText,
                         ),
                       ),
                     ),
-                    Text(
-                      priceText,
-                      style: const TextStyle(
-                        color: Color(0xFF1C63D6),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
                   ],
                 ),
-                if (order.serviceCategoryId == 'towing') ...[
-                  const SizedBox(height: 4),
-                  const Text(
-                    'السعر الأساسي لا يشمل رسوم المسافة',
-                    style: TextStyle(color: Color(0xFF69728C), fontSize: 11),
-                  ),
-                ],
-                const SizedBox(height: 8),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+              ),
+              const Divider(height: 1, color: CustomerColors.cardBorder),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Column(
                   children: [
-                    Text(
-                      'عرض التفاصيل',
-                      style: TextStyle(
-                        color: Color(0xFF1C63D6),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Row(
+                      children: [
+                        const Icon(Icons.near_me_outlined, size: 17,
+                            color: CustomerColors.secondaryText),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text('المسافة إلى المركبة: ${_requests.distanceText(order)}',
+                              style: const TextStyle(fontSize: 12,
+                                  color: CustomerColors.secondaryText)),
+                        ),
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Text(_requests.countdown(order),
+                              style: const TextStyle(fontWeight: FontWeight.w700,
+                                  color: CustomerColors.accent,
+                                  fontFeatures: [FontFeature.tabularFigures()])),
+                        ),
+                      ],
                     ),
-                    SizedBox(width: 4),
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: Icon(
-                        Icons.arrow_back_rounded,
-                        size: 17,
-                        color: Color(0xFF1C63D6),
-                      ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text('عرض الموقع وتفاصيل الطلب',
+                              style: TextStyle(fontSize: 12,
+                                  color: CustomerColors.secondaryText)),
+                        ),
+                        const Text('عرض التفاصيل',
+                            style: TextStyle(fontWeight: FontWeight.w600,
+                                color: CustomerColors.accent)),
+                        const SizedBox(width: 5),
+                        const Directionality(textDirection: TextDirection.ltr,
+                            child: Icon(Icons.arrow_back_rounded,
+                                size: 17, color: CustomerColors.accent)),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
