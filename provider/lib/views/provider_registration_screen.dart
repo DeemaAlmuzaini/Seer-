@@ -8,7 +8,8 @@ import '../theme/app_colors.dart';
 import '../services/auth_service.dart';
 import '../controllers/provider_registration_controller.dart';
 import 'provider_success_screen.dart';
-import '../widgets/plate_number_input.dart';
+import '../widgets/plate_number_field.dart';
+import '../models/service_provider.dart';
 import '../widgets/app_snackbar.dart';
 import '../models/lookup_model.dart';
 
@@ -88,7 +89,7 @@ class _ProviderRegistrationScreenState
   String? _colorError;
   final GlobalKey<PlateNumberFieldState> _plateFieldKey =
       GlobalKey<PlateNumberFieldState>();
-  bool _plateError = false;
+  String? _plateError;
 
   final List<Map<String, dynamic>> _vehicleTypesWithIcons = [
     {'label': 'سيدان', 'icon': MdiIcons.carSide},
@@ -191,6 +192,11 @@ class _ProviderRegistrationScreenState
   // 1) the same text in two different categories never collides.
   // 2) the reference stays stable even if the displayed text changes later.
   final Set<String> _selectedServices = {};
+
+  /// A sedan, SUV, pickup or van cannot tow, so towing is only offered for
+  /// the other vehicle types.
+  bool get _canTow =>
+      vehicleTypeCanTow(_selectedVehicleType?['label'] as String? ?? '');
 
   String _optionKey(String categoryId, String optionId) =>
       '$categoryId.$optionId';
@@ -437,6 +443,10 @@ class _ProviderRegistrationScreenState
             setState(() {
               _selectedVehicleType = value;
               _vehicleTypeError = null;
+              // Drop a towing choice if the new vehicle type cannot tow.
+              if (!_canTow) {
+                _selectedServices.removeWhere((k) => k.startsWith('towing.'));
+              }
               if (value?['label'] != 'أخرى') {
                 _otherVehicleTypeController.clear();
               }
@@ -685,7 +695,7 @@ class _ProviderRegistrationScreenState
     }
 
     final plate = _plateFieldKey.currentState!.value;
-    setState(() => _plateError = !plate.isValid);
+    setState(() => _plateError = plateErrorMessage(plate));
     return plate.isValid;
   }
 
@@ -1167,20 +1177,31 @@ class _ProviderRegistrationScreenState
           style: TextStyle(fontSize: 12, color: AppColors.secondaryText),
         ),
         const SizedBox(height: 10),
-        PlateNumberField(
-          navy: AppColors.navy,
-          key: _plateFieldKey,
-          // Hide the red plate error as soon as the user edits the plate.
-          onChanged: (_) {
-            if (_plateError) setState(() => _plateError = false);
-          },
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: _plateError == null
+                  ? Colors.transparent
+                  : Colors.red.shade700,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: PlateNumberField(
+            navy: AppColors.navy,
+            key: _plateFieldKey,
+            // Hide the red plate error as soon as the user edits the plate.
+            onChanged: (_) {
+              if (_plateError != null) setState(() => _plateError = null);
+            },
+          ),
         ),
-        if (_plateError)
-          const Padding(
-            padding: EdgeInsets.only(top: 6),
+        if (_plateError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, right: 14, left: 14),
             child: Text(
-              'الرجاء إدخال رقم وحرف واحد على الأقل',
-              style: TextStyle(color: Colors.red, fontSize: 12),
+              _plateError!,
+              style: TextStyle(color: Colors.red.shade700, fontSize: 12),
             ),
           ),
         const SizedBox(height: 16),
@@ -1236,6 +1257,33 @@ class _ProviderRegistrationScreenState
           final Map<String, String> options = Map<String, String>.from(
             categoryData['options'] as Map,
           );
+
+          if (categoryId == 'towing' && !_canTow) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    categoryLabel,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.navy,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'خدمة السطحة غير متاحة لنوع مركبتك.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.secondaryText,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 20),

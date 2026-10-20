@@ -33,7 +33,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
   late String _initialPlateDigits;
   late String _initialPlateArabicLetters;
 
-  bool _plateError = false;
+  String? _plateError;
 
   final _plateFieldKey = GlobalKey<PlateNumberFieldState>();
   final _formKey = GlobalKey<FormState>();
@@ -239,24 +239,38 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
 
                   const SizedBox(height: 14),
 
-                  PlateNumberField(
-                    key: _plateFieldKey,
-                    navy: AppColors.navy,
-                    initialDigits: _initialPlateDigits,
-                    initialArabicLetters: _initialPlateArabicLetters,
-                    // Hide the red plate error as soon as the user edits the plate.
-                    onChanged: (_) {
-                      if (_plateError) setState(() => _plateError = false);
-                    },
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: _plateError == null
+                            ? Colors.transparent
+                            : Colors.red.shade700,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: PlateNumberField(
+                      key: _plateFieldKey,
+                      navy: AppColors.navy,
+                      initialDigits: _initialPlateDigits,
+                      initialArabicLetters: _initialPlateArabicLetters,
+                      // Hide the red plate error as soon as the user edits the plate.
+                      onChanged: (_) {
+                        if (_plateError != null) {
+                          setState(() => _plateError = null);
+                        }
+                      },
+                    ),
                   ),
 
-                  if (_plateError)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 6),
+                  if (_plateError != null)
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(top: 6, right: 14, left: 14),
                       child: Text(
-                        'رقم اللوحة مطلوب',
+                        _plateError!,
                         style: TextStyle(
-                          color: Colors.red,
+                          color: Colors.red.shade700,
                           fontSize: 12,
                         ),
                       ),
@@ -286,7 +300,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                           _plateFieldKey.currentState!.value;
 
                       setState(() {
-                        _plateError = !plateValue.isValid;
+                        _plateError = plateErrorMessage(plateValue);
                       });
 
                       if (_formKey.currentState!.validate() &&
@@ -301,6 +315,7 @@ class _EditVehicleScreenState extends State<EditVehicleScreen> {
                           phone: widget.provider.phone,
                           email: widget.provider.email,
                           nationalId: widget.provider.nationalId,
+                          vehicleType: widget.provider.vehicleType,
 
                           vehicleBrand: brand,
                           vehicleModel: model,

@@ -20,7 +20,13 @@ class _EditServicesScreenState extends State<EditServicesScreen> {
   void initState(){
     super.initState();
     selectedBranches = Set<String>.from(widget.provider.activeBranches);
+    // A vehicle that cannot tow never keeps a towing service.
+    if (!_canTow) {
+      selectedBranches.removeAll(allServiceBranches['السطحة']!);
+    }
   }//end initState
+
+  bool get _canTow => vehicleTypeCanTow(widget.provider.vehicleType);
 
   void _toggleBranch(String branch){
     setState((){
@@ -60,6 +66,15 @@ class _EditServicesScreenState extends State<EditServicesScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  if (category == 'السطحة' && !_canTow)
+                    const Text(
+                      'خدمة السطحة غير متاحة لنوع مركبتك.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.secondaryText,
+                      ),
+                    )
+                  else
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -86,6 +101,7 @@ class _EditServicesScreenState extends State<EditServicesScreen> {
                       phone: widget.provider.phone,
                       email: widget.provider.email,
                       nationalId: widget.provider.nationalId,
+                      vehicleType: widget.provider.vehicleType,
                       vehicle: widget.provider.vehicle,
                       plateNumberArabic : widget.provider.plateNumberArabic,
                       plateNumberLatin : widget.provider.plateNumberLatin,
