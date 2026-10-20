@@ -202,6 +202,8 @@ class ProviderRequestsController extends ChangeNotifier {
       }
       _hidden.add(orderId);
       return null;
+    } on ProviderHasActiveOrder {
+      return 'لديك طلب قيد التنفيذ. أكمله قبل قبول طلب جديد.';
     } on RequestUnavailable {
       _hidden.add(orderId);
       return unavailableMessage;

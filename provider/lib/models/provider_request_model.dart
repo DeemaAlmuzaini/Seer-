@@ -3,6 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'order.dart';
 
 /// A request became unavailable before the provider's transaction committed.
+class ProviderHasActiveOrder implements Exception {
+  const ProviderHasActiveOrder();
+}
+
 class RequestUnavailable implements Exception {
   /// Takes no inputs; creates the expected stale-request error.
   const RequestUnavailable();
@@ -83,19 +87,37 @@ class ProviderRequestModel implements RequestRepository {
   @override
   Future<void> accept(String orderId, String providerId) async {
     final ref = _orders.doc(orderId);
-    final accepted = await _firestore.runTransaction<bool>((transaction) async {
-      if (_availableOrder(await transaction.get(ref), providerId) == null) {
-        return false;
+    final providerRef = _firestore.collection('providers').doc(providerId);
+    final outcome = await _firestore.runTransaction<int>((transaction) async {
+      // Read both documents before performing any writes. Both requests for
+      // this provider contend on the same provider document.
+      final providerSnapshot = await transaction.get(providerRef);
+      final orderSnapshot = await transaction.get(ref);
+      if (_availableOrder(orderSnapshot, providerId) == null) return 0;
+      if (!providerSnapshot.exists) return 0;
+
+      final activeOrderId =
+          (providerSnapshot.data()?['activeOrderId'] as String?) ?? '';
+      if (activeOrderId.isNotEmpty) {
+        final activeSnapshot = await transaction.get(_orders.doc(activeOrderId));
+        final activeOrder = activeSnapshot.data();
+        if (activeOrder != null &&
+            activeOrder['providerId'] == providerId &&
+            OrderStatus.active.contains(activeOrder['status'])) {
+          return 1;
+        }
       }
+
+      transaction.update(providerRef, {'activeOrderId': orderId});
       transaction.update(ref, {
         'status': OrderStatus.accepted,
         'providerId': providerId,
         'acceptedAt': FieldValue.serverTimestamp(),
       });
-      return true;
+      return 2;
     });
-    // Keep domain exceptions outside SDK callbacks for native/web consistency.
-    if (!accepted) throw const RequestUnavailable();
+    if (outcome == 1) throw const ProviderHasActiveOrder();
+    if (outcome != 2) throw const RequestUnavailable();
   }
 
   /// Takes an order and candidate id; adds only that candidate's rejection in

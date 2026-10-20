@@ -184,6 +184,14 @@ class CustomerOrdersModel {
       if (!canCancel(order, DateTime.now())) {
         throw StateError('Order can no longer be cancelled');
       }
+      final providerId = order.providerId;
+      if (providerId != null && providerId.isNotEmpty) {
+        final providerRef = firestore.collection(_providersCollection).doc(providerId);
+        final providerSnapshot = await transaction.get(providerRef);
+        if (providerSnapshot.data()?['activeOrderId'] == orderId) {
+          transaction.update(providerRef, {'activeOrderId': FieldValue.delete()});
+        }
+      }
       transaction.update(ref, {
         'status': OrderStatus.cancelled,
         'cancelledAt': FieldValue.serverTimestamp(),
