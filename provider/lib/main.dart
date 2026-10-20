@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'services/password_reset_link_handler.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -13,12 +14,20 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key, this.authService});
   final AuthService? authService;
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
 
+class _MyAppState extends State<MyApp> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
   @override
   Widget build(BuildContext context) => MaterialApp(
+    navigatorKey: _navigatorKey,
+    builder: (context, child) => PasswordResetLinkHandler(
+      navigatorKey: _navigatorKey, child: child ?? const SizedBox.shrink()),
     debugShowCheckedModeBanner: false,
     title: 'سير - مزود الخدمة',
     locale: const Locale('ar'),
@@ -29,6 +38,6 @@ class MyApp extends StatelessWidget {
       GlobalCupertinoLocalizations.delegate,
     ],
     theme: AppTheme.data,
-    home: AuthGate(authService: authService),
+    home: AuthGate(authService: widget.authService),
   );
 }
