@@ -240,7 +240,7 @@ class _CustomerMainState extends State<CustomerMain>
                 builder: (context, _) {
                   final unread = _activeOrders.orders.fold<int>(
                     0,
-                    (sum, order) => sum + order.chatUnreadCustomer,
+                    (total, order) => total + order.chatUnreadCustomer,
                   );
                   const active = Color(0xFF1C63D6);
                   const inactive = Color(0xFF6B7385);
