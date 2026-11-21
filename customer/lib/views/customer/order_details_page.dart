@@ -16,7 +16,9 @@ import '../../widgets/plate_number_view.dart';
 import '../../widgets/customer_order_tracking_map.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/app_snackbar.dart';
-import 'request_service_page.dart';
+import '../../controllers/order_chat_controller.dart';
+import '../../models/order_message.dart';
+import 'order_chat_page.dart';
 import 'request_service_page.dart';
 
 /// Shows the full details of one order and its assigned provider (#25, #26).
@@ -224,6 +226,7 @@ class _OrderDetailsBody extends StatelessWidget {
                     controller: controller,
                     phone: order.providerPhone,
                     canCall: OrderStatus.active.contains(order.status),
+                    order: order,
                   ),
                 if (order.status == OrderStatus.completed)
                     OrderRatingSection(
@@ -712,12 +715,14 @@ class _ProviderCard extends StatefulWidget {
     required this.controller,
     required this.phone,
     required this.canCall,
+    required this.order,
   });
 
   final String providerId;
   final CustomerOrdersController controller;
   final String phone;
   final bool canCall;
+  final ServiceOrder order;
 
   /// Creates the section state.
   ///
@@ -767,6 +772,27 @@ class _ProviderCardState extends State<_ProviderCard> {
     return trimmed.isEmpty ? '' : trimmed.substring(0, 1);
   }
 
+  /// Opens the chat page of this order.
+  ///
+  /// Parameters: [providerName] is shown as the title of the chat.
+  /// Returns: nothing.
+  void _openChat(String providerName) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => OrderChatPage(
+          controller: OrderChatController(
+            orderId: widget.order.id,
+            uid: widget.controller.uid,
+            senderType: MessageSender.customer,
+          ),
+          order: widget.order,
+          title: providerName,
+          phone: widget.phone,
+        ),
+      ),
+    );
+  }  
+  
   /// Opens the phone dialer with the provider's number.
   ///
   /// Parameters: [phone] is the provider's phone number.
@@ -831,6 +857,8 @@ class _ProviderCardState extends State<_ProviderCard> {
         final faint = CustomerColors.background.withValues(alpha: 0.08);
         final vehicle = provider.vehicleTitle.trim();
         final color = provider.vehicleColor.trim();
+        final showChat = OrderChatController.accessFor(widget.order) != ChatAccess.hidden;
+        final showCall = widget.canCall && widget.phone.isNotEmpty;
 
         return _shell(
           Column(
@@ -960,22 +988,55 @@ class _ProviderCardState extends State<_ProviderCard> {
                     ),
                 ],
               ),
-              if (widget.canCall && widget.phone.isNotEmpty) ...[
+              if (showChat || showCall) ...[
                 const SizedBox(height: 14),
-                SizedBox(
-                  height: 44,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _call(widget.phone),
-                    icon: const Icon(Icons.call, size: 18),
-                    label: const Text('اتصال بمزود الخدمة'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: CustomerColors.accent,
-                      foregroundColor: CustomerColors.background,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                Row(
+                  children: [
+                    if (showChat)
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _openChat(provider.fullName),
+                            icon: const Icon(
+                              Icons.chat_bubble_outline_rounded,
+                              size: 18,
+                            ),
+                            label: const Text('محادثة'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: CustomerColors.accent,
+                              foregroundColor: CustomerColors.background,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
+                    if (showChat && showCall) const SizedBox(width: 10),
+                    if (showCall)
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: OutlinedButton.icon(
+                            onPressed: () => _call(widget.phone),
+                            icon: const Icon(Icons.call, size: 18),
+                            label: const Text('اتصال'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: CustomerColors.background,
+                              side: BorderSide(
+                                color: CustomerColors.background.withValues(
+                                  alpha: 0.4,
+                                ),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ],
