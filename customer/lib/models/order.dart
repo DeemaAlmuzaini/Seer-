@@ -50,6 +50,8 @@ class ServiceOrder {
     this.customerName = '',
     this.customerPhone = '',
     this.providerPhone = '',
+    this.chatUnreadCustomer = 0,
+    this.chatUnreadProvider = 0,
     this.finalPrice,
     this.createdAt,
     this.acceptedAt,
@@ -73,6 +75,14 @@ class ServiceOrder {
 
   /// Copied from the provider's profile when they accept, so the customer can call them.
   final String providerPhone;
+
+  /// Chat messages the customer has not read yet. It is counted on the order,
+  /// so the app can show a dot without opening the chat.
+  final int chatUnreadCustomer;
+
+  /// Chat messages the provider has not read yet.
+  final int chatUnreadProvider;
+
 
   // Vehicle (#14)
   final String vehicleId;
@@ -143,6 +153,8 @@ class ServiceOrder {
       customerName: (map['customerName'] ?? '') as String,
       customerPhone: (map['customerPhone'] ?? '') as String,
       providerPhone: (map['providerPhone'] ?? '') as String,
+      chatUnreadCustomer: ((map['chatUnreadCustomer'] ?? 0) as num).toInt(),
+      chatUnreadProvider: ((map['chatUnreadProvider'] ?? 0) as num).toInt(),
       vehicleId: (map['vehicleId'] ?? '') as String,
       vehicleTitle: (map['vehicleTitle'] ?? '') as String,
       vehicleColor: (map['vehicleColor'] ?? '').toString(),

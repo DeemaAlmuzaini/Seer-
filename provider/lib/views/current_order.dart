@@ -476,7 +476,11 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
         ),
         TextButton.icon(
           onPressed: () => _openChat(order),
-          icon: const Icon(Icons.chat, size: 18),
+          icon: Badge(
+            isLabelVisible: order.chatUnreadProvider > 0,
+            label: Text('${order.chatUnreadProvider}'),
+            child: const Icon(Icons.chat, size: 18),
+          ),
           label: const Text('فتح'),
           style: TextButton.styleFrom(foregroundColor: AppColors.blue),
         ),
@@ -501,7 +505,7 @@ class _ProviderCurrentOrderState extends State<ProviderCurrentOrder> {
       ),
     );
   }
-  
+
   Widget _actionBar(ServiceOrder order, OrderStep step) {
     final bool completes = step.next == OrderStatus.completed;
     return Container(

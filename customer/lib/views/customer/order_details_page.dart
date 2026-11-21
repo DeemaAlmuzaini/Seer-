@@ -998,9 +998,13 @@ class _ProviderCardState extends State<_ProviderCard> {
                           height: 44,
                           child: ElevatedButton.icon(
                             onPressed: () => _openChat(provider.fullName),
-                            icon: const Icon(
-                              Icons.chat_bubble_outline_rounded,
-                              size: 18,
+                            icon: Badge(
+                              isLabelVisible: widget.order.chatUnreadCustomer > 0,
+                              label: Text('${widget.order.chatUnreadCustomer}'),
+                              child: const Icon(
+                                Icons.chat_bubble_outline_rounded,
+                                size: 18,
+                              ),
                             ),
                             label: const Text('محادثة'),
                             style: ElevatedButton.styleFrom(

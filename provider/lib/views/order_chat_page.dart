@@ -42,6 +42,13 @@ class _OrderChatPageState extends State<OrderChatPage> {
       widget.controller.watchMessages();
   late final Stream<ServiceOrder?> _orders = widget.controller.watchOrder();
 
+  @override
+  void initState() {
+    super.initState();
+    // Opening the chat counts as seeing the new messages.
+    widget.controller.markSeen();
+  }
+  
   static const _openStatus = 'الطلب جارٍ';
   static const _closedStatus = 'انتهى الطلب';
   static const _unavailable = 'المحادثة غير متاحة لهذا الطلب.';

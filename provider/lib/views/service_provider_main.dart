@@ -36,6 +36,9 @@ class _ServiceProviderMainState extends State<ServiceProviderMain>
   Timer? _trackingOrderRetryTimer;
   int _orderStreamFailures = 0;
 
+  /// Unread chat messages of the current order, shown on the Orders tab.
+  int _chatUnread = 0;  
+
   // In-app notifications (#47): live list, bell badge and banner.
   NotificationController? _notifications;
 
@@ -83,6 +86,10 @@ class _ServiceProviderMainState extends State<ServiceProviderMain>
       (order) {
         _orderStreamFailures = 0;
         unawaited(_tracking.syncOrder(order));
+        final unread = order?.chatUnreadProvider ?? 0;
+        if (mounted && unread != _chatUnread) {
+          setState(() => _chatUnread = unread);
+        }
       },
       onError: (Object error) {
         debugPrint('Tracking order watcher error: $error');
@@ -345,10 +352,24 @@ class _ServiceProviderMainState extends State<ServiceProviderMain>
                   selectedIndex = index;
                 });
               },
-              tabs: const [
-                GButton(icon: Icons.home_rounded, text: 'الرئيسية'),
-                GButton(icon: Icons.receipt_long_rounded, text: 'الطلبات'),
-                GButton(icon: Icons.person_rounded, text: 'الحساب'),
+              tabs: [
+                const GButton(icon: Icons.home_rounded, text: 'الرئيسية'),
+                GButton(
+                  icon: Icons.receipt_long_rounded,
+                  text: 'الطلبات',
+                  // The badge tells there are unread chat messages.
+                  leading: Badge(
+                    isLabelVisible: _chatUnread > 0,
+                    label: Text('$_chatUnread'),
+                    child: Icon(
+                      Icons.receipt_long_rounded,
+                      color: selectedIndex == 1
+                          ? const Color(0xFF1C63D6)
+                          : const Color(0xFF69728C),
+                    ),
+                  ),
+                ),
+                const GButton(icon: Icons.person_rounded, text: 'الحساب'),
               ],
             ),
           ),

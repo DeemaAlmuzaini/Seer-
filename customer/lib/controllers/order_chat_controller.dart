@@ -85,11 +85,23 @@ class OrderChatController {
     });
   }
 
+  /// The other side of the chat: the one who receives our messages.
+  String get _otherSide => senderType == MessageSender.customer
+      ? MessageSender.provider
+      : MessageSender.customer;
+
+  /// Clears the unread count of this side. Call it when the chat page opens.
+  void markSeen() {
+    unawaited(
+      _model.clearUnread(orderId, senderType).then((_) {}, onError: (_) {}),
+    );
+  }
+  
   /// Listens to the order of the chat.
   /// Returns: a stream with the latest version of the order, so the chat
   /// opens or closes by itself when the order status changes.
   Stream<ServiceOrder?> watchOrder() => _model.watchOrder(orderId);
-  
+
   /// Sends a message.
   /// Parameters: [text] is what the user typed and [order] is the latest
   /// version of the order, used to check that the chat is still open.
@@ -108,7 +120,11 @@ class OrderChatController {
     try {
       // Not awaited: without internet Firestore keeps the message on the
       // phone and sends it later, so waiting here would freeze the screen.
-      unawaited(_model.send(orderId, message).then((_) {}, onError: (_) {}));
+      unawaited(
+        _model
+            .send(orderId, message, recipientType: _otherSide)
+            .then((_) {}, onError: (_) {}),
+      );
     } catch (_) {
       return _sendFailedError;
     }
@@ -130,7 +146,7 @@ class OrderChatController {
         .toList();
     if (ids.isEmpty) return;
     _readRequested.addAll(ids);
-    unawaited(_model.markRead(orderId, ids).then((_) {}, onError: (_) {
+    unawaited(_model.markRead(orderId, ids, readerType: senderType).then((_) {}, onError: (_) {
       // Allow a retry on the next update if the write failed.
       _readRequested.removeAll(ids);
     }));

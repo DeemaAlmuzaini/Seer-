@@ -179,6 +179,10 @@ class OrderCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (order.chatUnreadCustomer > 0) ...[
+                _UnreadPill(count: order.chatUnreadCustomer),
+                const SizedBox(width: 10),
+              ],
               if (canReorder) _reorderButton() else _detailsLink(),
             ],
           ),
@@ -328,6 +332,40 @@ class _InfoItem extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Small red pill that tells the customer there are unread chat messages.
+class _UnreadPill extends StatelessWidget {
+  /// Creates the pill; [count] is the number of unread messages.
+  const _UnreadPill({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppStatusColors.error,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.chat_bubble_rounded, size: 13, color: Colors.white),
+          const SizedBox(width: 5),
+          Text(
+            count == 1 ? 'رسالة جديدة' : '$count رسائل جديدة',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
