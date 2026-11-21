@@ -49,6 +49,7 @@ class ServiceOrder {
     required this.status,
     this.customerName = '',
     this.customerPhone = '',
+    this.providerPhone = '',
     this.finalPrice,
     this.createdAt,
     this.acceptedAt,
@@ -69,6 +70,9 @@ class ServiceOrder {
   /// Copied from the customer's profile so the provider can see and call them.
   final String customerName;
   final String customerPhone;
+
+  /// Copied from the provider's profile when they accept, so the customer can call them.
+  final String providerPhone;
 
   // Vehicle (#14)
   final String vehicleId;
@@ -138,6 +142,7 @@ class ServiceOrder {
       customerId: (map['customerId'] ?? '') as String,
       customerName: (map['customerName'] ?? '') as String,
       customerPhone: (map['customerPhone'] ?? '') as String,
+      providerPhone: (map['providerPhone'] ?? '') as String,
       vehicleId: (map['vehicleId'] ?? '') as String,
       vehicleTitle: (map['vehicleTitle'] ?? '') as String,
       vehicleColor: (map['vehicleColor'] ?? '').toString(),
@@ -175,6 +180,7 @@ class ServiceOrder {
       'customerId': customerId,
       'customerName': customerName,
       'customerPhone': customerPhone,
+      'providerPhone': providerPhone,
       'vehicleId': vehicleId,
       'vehicleTitle': vehicleTitle,
       'vehicleColor': vehicleColor,

@@ -14,6 +14,9 @@ import '../../widgets/location_card.dart';
 import '../../controllers/address_controller.dart';
 import '../../widgets/plate_number_view.dart';
 import '../../widgets/customer_order_tracking_map.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../widgets/app_snackbar.dart';
+import 'request_service_page.dart';
 import 'request_service_page.dart';
 
 /// Shows the full details of one order and its assigned provider (#25, #26).
@@ -216,8 +219,13 @@ class _OrderDetailsBody extends StatelessWidget {
                   _OrderTimeline(order: order),
                 if (providerId != null && providerId.isNotEmpty) ...[
                   const SizedBox(height: 14),
-                  _ProviderCard(providerId: providerId, controller: controller),
-                  if (order.status == OrderStatus.completed)
+                  _ProviderCard(
+                    providerId: providerId,
+                    controller: controller,
+                    phone: order.providerPhone,
+                    canCall: OrderStatus.active.contains(order.status),
+                  ),
+                if (order.status == OrderStatus.completed)
                     OrderRatingSection(
                       key: ValueKey(order.id),
                       order: order,
@@ -699,10 +707,17 @@ class _ProviderCard extends StatefulWidget {
   ///
   /// Parameters: [providerId] is the assigned provider's user id and
   /// [controller] is used to load the provider.
-  const _ProviderCard({required this.providerId, required this.controller});
+  const _ProviderCard({
+    required this.providerId,
+    required this.controller,
+    required this.phone,
+    required this.canCall,
+  });
 
   final String providerId;
   final CustomerOrdersController controller;
+  final String phone;
+  final bool canCall;
 
   /// Creates the section state.
   ///
@@ -751,6 +766,23 @@ class _ProviderCardState extends State<_ProviderCard> {
     final trimmed = name.trim();
     return trimmed.isEmpty ? '' : trimmed.substring(0, 1);
   }
+
+  /// Opens the phone dialer with the provider's number.
+  ///
+  /// Parameters: [phone] is the provider's phone number.
+  /// Returns: nothing; shows a message if the dialer cannot be opened.
+  Future<void> _call(String phone) async {
+    var opened = false;
+    try {
+      opened = await launchUrl(Uri(scheme: 'tel', path: phone));
+    } catch (_) {
+      opened = false;
+    }
+    if (!opened && mounted) {
+      showAppMessage(context, 'تعذر فتح الاتصال على هذا الجهاز');
+    }
+  }
+
 
   /// Builds the navy container used for every state of the card.
   ///
@@ -928,6 +960,24 @@ class _ProviderCardState extends State<_ProviderCard> {
                     ),
                 ],
               ),
+              if (widget.canCall && widget.phone.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                SizedBox(
+                  height: 44,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _call(widget.phone),
+                    icon: const Icon(Icons.call, size: 18),
+                    label: const Text('اتصال بمزود الخدمة'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: CustomerColors.accent,
+                      foregroundColor: CustomerColors.background,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         );

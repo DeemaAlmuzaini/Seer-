@@ -122,6 +122,7 @@ class ProviderRequestModel implements RequestRepository {
       transaction.update(ref, {
         'status': OrderStatus.accepted,
         'providerId': providerId,
+        'providerPhone': (providerSnapshot.data()?['phone'] as String?) ?? '',
         'acceptedAt': FieldValue.serverTimestamp(),
       });
       return 2;
