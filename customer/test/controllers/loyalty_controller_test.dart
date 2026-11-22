@@ -94,7 +94,7 @@ void main() {
         ],
         [_complaint(granted: true), _complaint()],
       );
-      // 6 completed: 1 from the card + 1 compensation - 1 used = 1.
+      // 5 paid completed (the free one is not counted): 1 + 1 - 1 = 1.
       expect(progress.completed, 5);
       expect(progress.compensations, 1);
       expect(progress.used, 1);
