@@ -89,6 +89,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 
   static const _title = 'تفاصيل الطلب';
   static const _missingOrder = 'هذا الطلب لم يعد متاحاً';
+  static const _referenceLabel = 'رقم الطلب';
 
   /// Builds the page and keeps it in sync with the order in Firestore.
   ///
@@ -119,13 +120,29 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Center(
-                child: Text(
-                  OrderFormat.reference(widget.initialOrder.id),
-                  textDirection: TextDirection.ltr,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: CustomerColors.secondaryText,
-                  ),
+                // The label stays right to left and the reference left to
+                // right, so the # does not jump to the wrong side.
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      '$_referenceLabel: ',
+                      textDirection: TextDirection.rtl,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: CustomerColors.secondaryText,
+                      ),
+                    ),
+                    Text(
+                      OrderFormat.reference(widget.initialOrder.id),
+                      textDirection: TextDirection.ltr,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: CustomerColors.primaryText,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

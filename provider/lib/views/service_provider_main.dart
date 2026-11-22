@@ -47,6 +47,10 @@ class _ServiceProviderMainState extends State<ServiceProviderMain>
   int _ordersVisit = 0;
   String? _requestedDetailsId;
 
+  /// True when Orders was opened from the bottom bar, so it picks the
+  /// "current" tab if there is an accepted order.
+  bool _ordersFromBar = false;
+
   /// False while the app is in the background or the screen is locked.
   bool _inForeground = true;
 
@@ -183,6 +187,7 @@ class _ServiceProviderMainState extends State<ServiceProviderMain>
     Navigator.of(context).popUntil((route) => route.isFirst);
     setState(() {
       _requestedDetailsId = null;
+      _ordersFromBar = false;
       selectedIndex = 1;
       _ordersVisit++;
     });
@@ -192,6 +197,7 @@ class _ServiceProviderMainState extends State<ServiceProviderMain>
     if (!mounted) return;
     setState(() {
       _requestedDetailsId = orderId;
+      _ordersFromBar = false;
       selectedIndex = 1;
       _ordersVisit++;
     });
@@ -226,6 +232,7 @@ class _ServiceProviderMainState extends State<ServiceProviderMain>
               key: ValueKey(_ordersVisit),
               authService: widget.authService,
               initialOrderId: _requestedDetailsId,
+              openCurrentIfActive: _ordersFromBar,
             )
           : ProviderProfileScreen(authService: widget.authService),
 
@@ -350,6 +357,10 @@ class _ServiceProviderMainState extends State<ServiceProviderMain>
               onTabChange: (index) {
                 setState(() {
                   selectedIndex = index;
+                  // A request opened earlier from Home is not reopened:
+                  // it may already be taken or expired.
+                  _requestedDetailsId = null;
+                  _ordersFromBar = true;
                 });
               },
               tabs: [
