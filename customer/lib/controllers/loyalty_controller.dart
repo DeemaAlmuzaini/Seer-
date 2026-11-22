@@ -119,7 +119,7 @@ class LoyaltyController {
     List<Complaint> complaints,
   ) {
     return LoyaltyProgress(
-      completed: countCompleted(orders.map((order) => order.status)),
+      completed: countCompleted(orders.where((o) => !o.usedFreeWash).map((o) => o.status)),
       compensations: complaints.where((c) => c.freeWashGranted).length,
       // A free wash that never happened (cancelled, rejected or no answer)
       // gives the reward back, so it does not count.

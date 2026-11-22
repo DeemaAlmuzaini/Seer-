@@ -95,7 +95,7 @@ void main() {
         [_complaint(granted: true), _complaint()],
       );
       // 6 completed: 1 from the card + 1 compensation - 1 used = 1.
-      expect(progress.completed, 6);
+      expect(progress.completed, 5);
       expect(progress.compensations, 1);
       expect(progress.used, 1);
       expect(progress.available, 1);
