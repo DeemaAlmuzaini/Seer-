@@ -387,7 +387,7 @@ Future<void> _selectDropoffFromMap() async {
                 title: vehicle?.title ?? '',
                 subtitle: vehicle == null
                     ? ''
-                    : 'لوحة ${vehicle.plateNumberArabic}',
+                    : 'لوحة ${vehicle.plateDisplay}',
                 actionLabel: _controller.vehicles.length > 1 ? 'تغيير' : null,
                 onAction: _changeVehicle,
               ),

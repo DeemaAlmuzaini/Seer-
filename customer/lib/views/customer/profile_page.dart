@@ -536,7 +536,7 @@ class _VehicleTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'لوحة ${vehicle.plateNumberArabic}',
+                    'لوحة ${vehicle.plateDisplay}',
                     style: const TextStyle(fontSize: 12, color: CustomerColors.secondaryText),
                   ),
                 ],

@@ -135,7 +135,7 @@ class _OrderReviewPageState extends State<OrderReviewPage> {
                           _Line(label: 'اللون', value: vehicle?.color ?? ''),
                           _Line(
                             label: 'اللوحة',
-                            value: vehicle?.plateNumberArabic ?? '',
+                            value: vehicle?.plateDisplay ?? '',
                             last: true,
                           ),
                         ],
