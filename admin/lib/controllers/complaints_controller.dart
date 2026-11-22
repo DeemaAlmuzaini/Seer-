@@ -107,7 +107,7 @@ static const _staleError = 'هذه الشكوى عولجت مسبقاً أو ل�
   /// Returns: the first 8 characters in upper case, prefixed by #.
   static String orderReference(String orderId) {
     final short = orderId.length > 8 ? orderId.substring(0, 8) : orderId;
-    return '#${short.toUpperCase()}';
+    return '\u2066#${short.toUpperCase()}\u2069';
   }
 
   /// Formats a price with two decimals and the currency.
