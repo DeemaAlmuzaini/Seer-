@@ -105,7 +105,10 @@ class _OrderReviewPageState extends State<OrderReviewPage> {
                           // #17: the customer sees the cost before confirming.
                           _Line(
                             label: 'السعر التقديري',
-                            value: formatPrice(_controller.estimatedPrice),
+                            // #67: a free car cleaning from the loyalty card.
+                            value: _controller.isFreeWash
+                                ? 'مجانًا'
+                                : formatPrice(_controller.estimatedPrice),
                             emphasised: true,
                             last: !_controller.priceDependsOnDistance,
                           ),

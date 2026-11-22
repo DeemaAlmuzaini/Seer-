@@ -101,13 +101,26 @@ void main() {
       expect(progress.available, 1);
     });
 
-    test('a cancelled free wash gives the wash back', () {
+    test('a free wash that never happened gives the reward back', () {
       final progress = LoyaltyController.progressFrom(
-        [_order(OrderStatus.cancelled, usedFreeWash: true)],
+        [
+          _order(OrderStatus.cancelled, usedFreeWash: true),
+          _order(OrderStatus.rejected, usedFreeWash: true),
+          _order(OrderStatus.autoCancelled, usedFreeWash: true),
+        ],
         [_complaint(granted: true)],
       );
       expect(progress.used, 0);
       expect(progress.available, 1);
+    });
+
+    test('a free wash in progress is already taken off', () {
+      final progress = LoyaltyController.progressFrom(
+        [_order(OrderStatus.pending, usedFreeWash: true)],
+        [_complaint(granted: true)],
+      );
+      expect(progress.used, 1);
+      expect(progress.available, 0);
     });
   });
 }

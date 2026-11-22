@@ -18,10 +18,18 @@ class Home extends StatelessWidget {
   /// Called after an order is sent, so the main page can open the orders tab.
   final VoidCallback? onOrderSent;
 
-  Future<void> _openService(BuildContext context, String categoryId) async {
+  Future<void> _openService(
+    BuildContext context,
+    String categoryId, {
+    bool useFreeWash = false,
+  }) async {
     final message = await Navigator.of(context).push<String>(
       MaterialPageRoute(
-        builder: (_) => RequestServicePage(uid: uid, categoryId: categoryId),
+        builder: (_) => RequestServicePage(
+          uid: uid,
+          categoryId: categoryId,
+          useFreeWash: useFreeWash,
+        ),
       ),
     );
     if (message == null || !context.mounted) return;
@@ -54,7 +62,8 @@ class Home extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: LoyaltyCard(
                   uid: uid,
-                  onRequestFreeWash: () => _openService(context, _carWashId),
+                  onRequestFreeWash: () =>
+                      _openService(context, _carWashId, useFreeWash: true),
                 ),
               ),
               const Padding(

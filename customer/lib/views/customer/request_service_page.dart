@@ -26,6 +26,7 @@ class RequestServicePage extends StatefulWidget {
     required this.uid,
     required this.categoryId,
     this.preferredVehicleId,
+    this.useFreeWash = false,
     this.reorderFrom,
     this.suggestion,
   });
@@ -37,6 +38,9 @@ class RequestServicePage extends StatefulWidget {
 
   /// The vehicle shown on the home page, pre-selected here.
   final String? preferredVehicleId;
+
+  /// True when opened from the loyalty card to use a free car cleaning (#67).
+  final bool useFreeWash;
 
   /// The rejected or auto-cancelled order this request is copied from, or
   /// null for a brand-new request (#21).
@@ -105,6 +109,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
     uid: widget.uid,
     categoryId: widget.categoryId,
     preferredVehicleId: widget.preferredVehicleId,
+    useFreeWash: widget.useFreeWash,
   );
 
   // Handles GPS/map location separately from the order-building controller.

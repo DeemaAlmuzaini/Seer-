@@ -19,6 +19,7 @@ class OrderDraftController extends ChangeNotifier {
     required this.uid,
     required this.categoryId,
     this.preferredVehicleId,
+    this.useFreeWash = false,
     VehicleModel? vehicleModel,
     OrderModel? orderModel,
     PricingModel? pricingModel,
@@ -35,6 +36,14 @@ class OrderDraftController extends ChangeNotifier {
  
   /// The vehicle shown on the home page, so the same one is pre-selected here.
   final String? preferredVehicleId;
+
+  /// True when the customer opened this request from the loyalty card to
+  /// use a free car cleaning (#67).
+  final bool useFreeWash;
+
+  /// Takes no inputs; returns true when this order is a free car cleaning.
+  /// Only the car wash service can be free.
+  bool get isFreeWash => useFreeWash && categoryId == 'carwash';
  
   final VehicleModel _vehicleModel;
   final OrderModel _orderModel;
@@ -198,6 +207,8 @@ void clearDropoffLocation() {
   /// What the customer is charged: the base price plus the distance fee and
   /// the size extra when they apply. null when this service has no price yet.
   num? get estimatedPrice {
+    // #67: a free car cleaning costs nothing, whatever the size.
+    if (isFreeWash) return 0;
     final base = basePrice;
     if (base == null) return null;
     return base + (distanceFee ?? 0) + sizeExtra;
@@ -320,6 +331,7 @@ String? validate() {
         note: note,
         estimatedPrice: estimatedPrice,
         status: OrderStatus.pending,
+        usedFreeWash: isFreeWash,
 
 // Locations belong to this individual order.
 // Non-towing orders intentionally store no drop-off location.

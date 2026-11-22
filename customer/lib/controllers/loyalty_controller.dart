@@ -102,6 +102,13 @@ class LoyaltyController {
   final CustomerOrdersModel _orders;
   final ComplaintModel _complaints;
 
+  /// Order statuses where no provider served the customer.
+  static const _notServed = {
+    OrderStatus.cancelled,
+    OrderStatus.rejected,
+    OrderStatus.autoCancelled,
+  };
+
   /// Takes order statuses; returns how many of them are completed.
   static int countCompleted(Iterable<String> statuses) =>
       statuses.where((status) => status == OrderStatus.completed).length;
@@ -114,9 +121,10 @@ class LoyaltyController {
     return LoyaltyProgress(
       completed: countCompleted(orders.map((order) => order.status)),
       compensations: complaints.where((c) => c.freeWashGranted).length,
-      // A cancelled free wash gives the wash back, so it does not count.
+      // A free wash that never happened (cancelled, rejected or no answer)
+      // gives the reward back, so it does not count.
       used: orders
-          .where((o) => o.usedFreeWash && o.status != OrderStatus.cancelled)
+          .where((o) => o.usedFreeWash && !_notServed.contains(o.status))
           .length,
     );
   }
