@@ -151,6 +151,7 @@ class ProviderRequestModel implements RequestRepository {
         'status': isScheduled
             ? OrderStatus.scheduledAccepted : OrderStatus.accepted,
         'providerId': providerId,
+        'providerPhone': (providerSnapshot.data()?['phone'] as String?) ?? '',
         'acceptedAt': FieldValue.serverTimestamp(),
       });
       return 2;
