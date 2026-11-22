@@ -244,7 +244,7 @@ class _ServiceProviderMainState extends State<ServiceProviderMain>
           ),
         ),
         title: const Text(
-          'سَيْر',
+          'سِير',
           style: TextStyle(
             color: Color(0xFF0E1B33),
             fontSize: 30,

@@ -537,7 +537,10 @@ class _SummaryHeader extends StatelessWidget {
             ],
           ),
         ),
-        _StatusChip(status: complaint.status),
+        _StatusChip(
+          status: complaint.status,
+          compensated: complaint.freeWashGranted,
+        ),
       ],
     );
   }
@@ -545,9 +548,10 @@ class _SummaryHeader extends StatelessWidget {
 
 /// Coloured label with the complaint status.
 class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
+  const _StatusChip({required this.status, this.compensated = false});
 
   final String status;
+  final bool compensated;
 
   @override
   Widget build(BuildContext context) {
@@ -559,7 +563,7 @@ class _StatusChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        ComplaintsController.statusLabel(status),
+        ComplaintsController.statusLabel(status, compensated: compensated),
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w700,

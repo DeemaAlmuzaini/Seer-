@@ -11,6 +11,7 @@ class ComplaintsController {
 
   static const _pendingLabel = 'قيد المراجعة';
   static const _resolvedLabel = 'تمت المعالجة';
+  static const _compensatedLabel = 'تم التعويض';
 
   /// Arabic names of the order statuses, as the customer app shows them.
   static const _orderStatusLabels = {
@@ -78,8 +79,10 @@ static const _staleError = 'هذه الشكوى عولجت مسبقاً أو ل�
   /// Returns the Arabic label of a complaint status.
   ///
   /// Parameters: [status] is a [ComplaintStatus] value.
-  static String statusLabel(String status) =>
-      status == ComplaintStatus.resolved ? _resolvedLabel : _pendingLabel;
+  static String statusLabel(String status, {bool compensated = false}) =>
+      status != ComplaintStatus.resolved
+          ? _pendingLabel
+          : (compensated ? _compensatedLabel : _resolvedLabel);
 
   /// Returns the Arabic label of an order status (unknown values are shown
   /// as they are).
