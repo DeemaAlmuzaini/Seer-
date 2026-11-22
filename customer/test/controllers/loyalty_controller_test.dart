@@ -34,7 +34,7 @@ void main() {
       expect(progress.filled, 0);
       expect(progress.counter, '0 / 5');
       expect(progress.title, 'مكافأة الولاء');
-      expect(progress.message, 'أكمل 5 خدمات واحصل على غسيل مجاني');
+      expect(progress.message, 'أكمل 5 خدمات للحصول على خدمة تنظيف سيارتك مجانًا');
       expect(progress.hasFreeWash, isFalse);
       expect(progress.availableLabel, isNull);
     });
@@ -42,17 +42,17 @@ void main() {
     test('lights one car per completed service', () {
       const progress = LoyaltyProgress(completed: 2);
       expect(progress.filled, 2);
-      expect(progress.message, 'باقي 3 خدمات وتحصل على غسيل مجاني');
+      expect(progress.message, 'باقي 3 خدمات للحصول على خدمة تنظيف سيارتك مجانًا');
     });
 
     test('uses the dual and singular forms', () {
       expect(
         const LoyaltyProgress(completed: 3).message,
-        'باقي خدمتان وتحصل على غسيل مجاني',
+        'باقي خدمتان للحصول على خدمة تنظيف سيارتك مجانًا',
       );
       expect(
         const LoyaltyProgress(completed: 4).message,
-        'باقي خدمة واحدة وتحصل على غسيل مجاني',
+        'باقي خدمة واحدة للحصول على خدمة تنظيف سيارتك مجانًا',
       );
     });
   });
@@ -62,8 +62,8 @@ void main() {
       const progress = LoyaltyProgress(completed: 5);
       expect(progress.available, 1);
       expect(progress.filled, 0);
-      expect(progress.title, 'غسيلك المجاني جاهز');
-      expect(progress.availableLabel, 'عندك غسلة مجانية واحدة');
+      expect(progress.title, 'مكافأة الولاء');
+      expect(progress.availableLabel, 'لديك خدمة تنظيف سيارة مجانية');
     });
 
     test('a used wash is taken off', () {
@@ -76,7 +76,7 @@ void main() {
     test('compensations add to the card washes', () {
       const progress = LoyaltyProgress(completed: 10, compensations: 1);
       expect(progress.available, 3);
-      expect(progress.availableLabel, 'عندك 3 غسلات مجانية');
+      expect(progress.availableLabel, 'لديك 3 خدمات تنظيف سيارة مجانية');
     });
 
     test('never goes below zero', () {

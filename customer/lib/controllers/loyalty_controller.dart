@@ -50,18 +50,18 @@ class LoyaltyProgress {
   int get remaining => goal - filled;
 
   /// Takes no inputs; returns the card title.
-  String get title => hasFreeWash ? 'غسيلك المجاني جاهز' : 'مكافأة الولاء';
+  String get title => 'مكافأة الولاء';
 
   /// Takes no inputs; returns the line about the next free wash (#70).
   String get message {
-    if (completed == 0) return 'أكمل $goal خدمات واحصل على غسيل مجاني';
+    if (completed == 0) return 'أكمل $goal خدمات للحصول على خدمة تنظيف سيارتك مجانًا';
     switch (remaining) {
       case 1:
-        return 'باقي خدمة واحدة وتحصل على غسيل مجاني';
+        return 'باقي خدمة واحدة للحصول على خدمة تنظيف سيارتك مجانًا';
       case 2:
-        return 'باقي خدمتان وتحصل على غسيل مجاني';
+        return 'باقي خدمتان للحصول على خدمة تنظيف سيارتك مجانًا';
       default:
-        return 'باقي $remaining خدمات وتحصل على غسيل مجاني';
+        return 'باقي $remaining خدمات للحصول على خدمة تنظيف سيارتك مجانًا';
     }
   }
 
@@ -72,13 +72,13 @@ class LoyaltyProgress {
       case 0:
         return null;
       case 1:
-        return 'عندك غسلة مجانية واحدة';
+        return 'لديك خدمة تنظيف سيارة مجانية';
       case 2:
-        return 'عندك غسلتان مجانيتان';
+        return 'لديك خدمتا تنظيف سيارة مجانيتان';
       default:
         return available <= 10
-            ? 'عندك $available غسلات مجانية'
-            : 'عندك $available غسلة مجانية';
+            ? 'لديك $available خدمات تنظيف سيارة مجانية'
+            : 'لديك $available خدمة تنظيف سيارة مجانية';
     }
   }
 

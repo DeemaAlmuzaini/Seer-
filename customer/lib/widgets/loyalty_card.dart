@@ -284,7 +284,7 @@ class _LoyaltyCardState extends State<LoyaltyCard> {
         ),
         textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
       ),
-      child: const Text('اطلب غسيلك المجاني'),
+      child: const Text('احجز الخدمة'),
     );
   }
 }
