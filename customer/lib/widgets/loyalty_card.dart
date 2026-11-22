@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../controllers/loyalty_controller.dart';
 import '../theme/app_colors.dart';
 
-/// VIEW: the navy loyalty card with a timeline of six cars that leads to a
+/// VIEW: the navy loyalty card with a timeline of cars that leads to a
 /// free car wash (#68, #70).
 class LoyaltyCard extends StatefulWidget {
   /// Takes the customer id, the free wash action and an optional
@@ -63,8 +63,19 @@ class _LoyaltyCardState extends State<LoyaltyCard> {
                 excludeSemantics: true,
                 child: _timeline(progress),
               ),
-              if (progress.justEarned) ...[
+              // Free washes waiting to be used (#66).
+              if (progress.hasFreeWash) ...[
                 const SizedBox(height: 14),
+                Text(
+                  progress.availableLabel!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: _gold,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 _freeWashButton(),
               ],
             ],
@@ -131,7 +142,7 @@ class _LoyaltyCardState extends State<LoyaltyCard> {
     );
   }
 
-  /// Takes the progress; returns six numbered car stops joined by links,
+  /// Takes the progress; returns the numbered car stops joined by links,
   /// then the gift. A link is colored once the stop before it is done.
   Widget _timeline(LoyaltyProgress progress) {
     final children = <Widget>[];
@@ -141,7 +152,7 @@ class _LoyaltyCardState extends State<LoyaltyCard> {
         ..add(_carStep(i, done))
         ..add(_link(done));
     }
-    children.add(_giftStep(progress.justEarned));
+    children.add(_giftStep(progress.hasFreeWash));
     return Row(crossAxisAlignment: CrossAxisAlignment.start, children: children);
   }
 

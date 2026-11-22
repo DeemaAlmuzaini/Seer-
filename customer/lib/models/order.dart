@@ -61,6 +61,7 @@ class ServiceOrder {
     this.expiresAt,
     this.completedAt,
     this.cancelledAt,
+    this.usedFreeWash = false,
   });
 
   final String id;
@@ -131,6 +132,10 @@ class ServiceOrder {
   /// Set by the customer app when the customer cancels the order (#20).
   final DateTime? cancelledAt;
 
+  /// True when the customer paid for this car wash with a free wash from the
+  /// loyalty card or a complaint compensation (#67).
+  final bool usedFreeWash;
+
   /// Parses document [id] and Firestore [map]; returns a typed order snapshot.
   factory ServiceOrder.fromMap(String id, Map<String, dynamic> map) {
     return ServiceOrder(
@@ -165,6 +170,7 @@ class ServiceOrder {
       expiresAt: (map['expiresAt'] as Timestamp?)?.toDate(),
       completedAt: (map['completedAt'] as Timestamp?)?.toDate(),
       cancelledAt: (map['cancelledAt'] as Timestamp?)?.toDate(),
+      usedFreeWash: map['usedFreeWash'] == true,
     );
   }
 
@@ -195,6 +201,8 @@ class ServiceOrder {
       'candidateProviderIds': candidateProviderIds,
       'rejectedBy': rejectedBy,
       'paymentConfirmed': paymentConfirmed,
+      // Written only when used, so older orders and rules stay unchanged.
+      if (usedFreeWash) 'usedFreeWash': true,
     };
   }
 }
