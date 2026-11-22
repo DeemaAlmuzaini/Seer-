@@ -39,6 +39,7 @@ class ComplaintsController {
 static const _staleError = 'هذه الشكوى عولجت مسبقاً أو لم تعد موجودة.';
   static const _resolveFailedError =
       'تعذّر تحديث حالة الشكوى. تحقق من الاتصال وحاول مرة أخرى.';
+  static const _notCustomerError = 'التعويض متاح لشكاوى العملاء فقط.';
 
   /// Story #55: follows one complaint live.
   Stream<Complaint?> watchComplaint(String id) => _model.watchById(id);
@@ -53,6 +54,22 @@ static const _staleError = 'هذه الشكوى عولجت مسبقاً أو ل�
       return null;
     } on StateError {
       return _staleError;
+    } catch (_) {
+      return _resolveFailedError;
+    }
+  }
+
+  /// Stories #64, #65: resolves a customer complaint and gives the customer
+  /// a free car cleaning.
+  ///
+  /// Parameters: [id] is the complaint document id.
+  /// Returns: null when it worked, or a message to show the admin.
+  Future<String?> compensateComplaint(String id) async {
+    try {
+      await _model.markCompensated(id);
+      return null;
+    } on StateError catch (e) {
+      return e.message == 'not a customer' ? _notCustomerError : _staleError;
     } catch (_) {
       return _resolveFailedError;
     }
