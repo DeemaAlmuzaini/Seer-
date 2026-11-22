@@ -25,6 +25,16 @@ class Vehicle {
 
   String get title => '$brand $model $year';
 
+  /// The Arabic plate for display: the letters spaced out, then the digits,
+  /// as on the real plate ("2026 سىر" -> "س ى ر 2026"). The stored value
+  /// stays as it is, so old vehicles and the provider app still work.
+  String get plateDisplay {
+    final parts = plateNumberArabic.trim().split(' ');
+    if (parts.length < 2) return plateNumberArabic;
+    final letters = parts.last.split('').join(' ');
+    return '$letters ${parts.first}';
+  }
+
   Vehicle copyWith({
     String? id,
     String? brand,

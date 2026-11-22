@@ -66,6 +66,7 @@ class ServiceOrder {
     this.expiresAt,
     this.completedAt,
     this.cancelledAt,
+    this.usedFreeWash = false,
     this.scheduledAt,
   });
 
@@ -148,6 +149,9 @@ class ServiceOrder {
   /// Set by the customer app when the customer cancels the order (#20).
   final DateTime? cancelledAt;
 
+  /// True when the customer paid for this car wash with a free wash from the
+  /// loyalty card or a complaint compensation (#67).
+  final bool usedFreeWash;
   /// Requested provider arrival time (local selection stored as Firestore timestamp).
   final DateTime? scheduledAt;
   bool get isScheduled => scheduledAt != null;
@@ -189,6 +193,7 @@ class ServiceOrder {
       expiresAt: (map['expiresAt'] as Timestamp?)?.toDate(),
       completedAt: (map['completedAt'] as Timestamp?)?.toDate(),
       cancelledAt: (map['cancelledAt'] as Timestamp?)?.toDate(),
+      usedFreeWash: map['usedFreeWash'] == true,
       scheduledAt: (map['scheduledAt'] as Timestamp?)?.toDate(),
     );
   }
@@ -221,6 +226,8 @@ class ServiceOrder {
       'candidateProviderIds': candidateProviderIds,
       'rejectedBy': rejectedBy,
       'paymentConfirmed': paymentConfirmed,
+      // Written only when used, so older orders and rules stay unchanged.
+      if (usedFreeWash) 'usedFreeWash': true,
       if (scheduledAt != null) 'scheduledAt': Timestamp.fromDate(scheduledAt!),
     };
   }

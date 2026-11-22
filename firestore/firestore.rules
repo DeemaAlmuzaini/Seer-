@@ -178,7 +178,8 @@ service cloud.firestore {
             'vehicleTitle', 'vehiclePlateArabic', 'vehiclePlateLatin', 'serviceCategoryId',
             'serviceCategoryLabel', 'serviceOptionId', 'serviceOptionLabel', 'serviceBranch',
             'note', 'estimatedPrice', 'finalPrice', 'status', 'pickupLocation', 'dropoffLocation',
-            'providerId', 'candidateProviderIds', 'rejectedBy', 'paymentConfirmed', 'createdAt', 'expiresAt'])
+            'providerId', 'candidateProviderIds', 'rejectedBy', 'paymentConfirmed', 'createdAt', 'expiresAt',
+            'usedFreeWash'])
           && o.status == 'pending' && o.providerId == null
           && o.finalPrice == null && o.paymentConfirmed == false
           && o.rejectedBy == [] && o.candidateProviderIds is list && o.candidateProviderIds.size() > 0
@@ -196,6 +197,9 @@ service cloud.firestore {
           && o.serviceOptionLabel is string && o.serviceBranch is string
           && o.serviceCategoryId in ['battery', 'fuel', 'tires', 'towing', 'carwash']
           && (o.estimatedPrice == null || (o.estimatedPrice is number && o.estimatedPrice >= 0))
+          // #67: a free car cleaning is only a car wash, and it costs nothing.
+          && (!('usedFreeWash' in o)
+            || (o.usedFreeWash == true && o.serviceCategoryId == 'carwash' && o.estimatedPrice == 0))
           && exists(/databases/$(database)/documents/customers/$(request.auth.uid)/vehicles/$(o.vehicleId));
       }
       // Takes no inputs; enforces customer cancellation and expiry with server time.

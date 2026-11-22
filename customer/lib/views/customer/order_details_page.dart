@@ -198,6 +198,9 @@ class _OrderDetailsBody extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
               children: [
                 _OrderHeader(order: order),
+                // An open or answered complaint is shown first, so the
+                // customer sees it without scrolling (#30).
+                ComplaintSection(order: order, uid: controller.uid),
                 if (OrderStatusBanner.hasMessage(order.status) &&
                     order.status != OrderStatus.completed) ...[
                   const SizedBox(height: 16),
@@ -234,8 +237,6 @@ class _OrderDetailsBody extends StatelessWidget {
                       order: order,
                       uid: controller.uid,
                     ),
-                  // Complaint action or existing complaint status (#30).
-                  ComplaintSection(order: order, uid: controller.uid),
                 ],
                 if (order.pickupLocation != null) ...[
                   const SizedBox(height: 14),

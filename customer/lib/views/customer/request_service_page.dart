@@ -27,6 +27,7 @@ class RequestServicePage extends StatefulWidget {
     required this.uid,
     required this.categoryId,
     this.preferredVehicleId,
+    this.useFreeWash = false,
     this.reorderFrom,
     this.suggestion,
   });
@@ -38,6 +39,9 @@ class RequestServicePage extends StatefulWidget {
 
   /// The vehicle shown on the home page, pre-selected here.
   final String? preferredVehicleId;
+
+  /// True when opened from the loyalty card to use a free car cleaning (#67).
+  final bool useFreeWash;
 
   /// The rejected or auto-cancelled order this request is copied from, or
   /// null for a brand-new request (#21).
@@ -106,6 +110,7 @@ class _RequestServicePageState extends State<RequestServicePage> {
     uid: widget.uid,
     categoryId: widget.categoryId,
     preferredVehicleId: widget.preferredVehicleId,
+    useFreeWash: widget.useFreeWash,
   );
 
   // Handles GPS/map location separately from the order-building controller.
@@ -314,6 +319,10 @@ Future<void> _selectDropoffFromMap() async {
     );
   }
 
+  static const _freeLabel = 'مجاني';
+  static const _freeTotalLabel = 'مجانًا';
+  static const _noExtraLabel = 'بدون زيادة';
+
   Widget _form(ServiceCategory? category) {
     final options = category?.options ?? const <ServiceOption>[];
     final vehicle = _controller.selectedVehicle;
@@ -332,6 +341,8 @@ Future<void> _selectDropoffFromMap() async {
                   child: _OptionCard(
                     label: option.label,
                     price: formatPrice(_controller.priceOf(option.id)),
+                    // A free car cleaning keeps the real price, crossed out.
+                    freeLabel: _controller.isFreeWash ? _freeLabel : null,
                     selected: _controller.selectedOptionId == option.id,
                     onTap: () => _controller.selectOption(option.id),
                   ),
@@ -346,9 +357,14 @@ Future<void> _selectDropoffFromMap() async {
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _OptionCard(
                       label: size.label,
+                      // A free car cleaning has no size extra either: the
+                      // large car extra is crossed out, and both say free.
                       price: size.id == VehicleSize.large.id
                           ? '+ ${formatPrice(_controller.prices.largeVehicleExtra)}'
-                          : 'بدون زيادة',
+                          : _controller.isFreeWash
+                          ? ''
+                          : _noExtraLabel,
+                      freeLabel: _controller.isFreeWash ? _freeLabel : null,
                       selected: _controller.vehicleSizeId == size.id,
                       onTap: () => _controller.selectVehicleSize(size.id),
                     ),
@@ -372,7 +388,7 @@ Future<void> _selectDropoffFromMap() async {
                 title: vehicle?.title ?? '',
                 subtitle: vehicle == null
                     ? ''
-                    : 'لوحة ${vehicle.plateNumberArabic}',
+                    : 'لوحة ${vehicle.plateDisplay}',
                 actionLabel: _controller.vehicles.length > 1 ? 'تغيير' : null,
                 onAction: _changeVehicle,
               ),
@@ -459,7 +475,9 @@ Future<void> _selectDropoffFromMap() async {
                       ),
                       const Spacer(),
                       Text(
-                        formatPrice(_controller.estimatedPrice),
+                        _controller.isFreeWash
+                            ? _freeTotalLabel
+                            : formatPrice(_controller.estimatedPrice),
                         style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w800,
@@ -536,12 +554,16 @@ class _OptionCard extends StatelessWidget {
   const _OptionCard({
     required this.label,
     required this.price,
+    this.freeLabel,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
   final String price;
+
+  /// Shown in blue after the crossed-out [price] when the service is free.
+  final String? freeLabel;
   final bool selected;
   final VoidCallback onTap;
 
@@ -582,16 +604,41 @@ class _OptionCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                price,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: selected
-                      ? CustomerColors.accent
-                      : CustomerColors.secondaryText,
+              if (freeLabel == null)
+                Text(
+                  price,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: selected
+                        ? CustomerColors.accent
+                        : CustomerColors.secondaryText,
+                  ),
+                )
+              else ...[
+                // The real price, grey and crossed out, then the free label.
+                if (price.isNotEmpty) ...[
+                Text(
+                  price,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: CustomerColors.secondaryText,
+                    decoration: TextDecoration.lineThrough,
+                    decorationColor: CustomerColors.secondaryText,
+                  ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                ],
+                Text(
+                  freeLabel!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: CustomerColors.accent,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
