@@ -63,7 +63,7 @@ void main() {
       expect(progress.available, 1);
       expect(progress.filled, 0);
       expect(progress.title, 'مكافأة الولاء');
-      expect(progress.availableLabel, 'لديك خدمة تنظيف سيارة مجانية');
+      expect(progress.availableLabel, 'متاح لك تنظيف السيارة مجانًا');
     });
 
     test('a used wash is taken off', () {
@@ -76,7 +76,12 @@ void main() {
     test('compensations add to the card washes', () {
       const progress = LoyaltyProgress(completed: 10, compensations: 1);
       expect(progress.available, 3);
-      expect(progress.availableLabel, 'لديك 3 خدمات تنظيف سيارة مجانية');
+      expect(progress.availableLabel, 'متاح لك تنظيف السيارة مجانًا 3 مرات');
+    });
+
+    test('says twice for two free washes', () {
+      const progress = LoyaltyProgress(completed: 10);
+      expect(progress.availableLabel, 'متاح لك تنظيف السيارة مجانًا مرتين');
     });
 
     test('never goes below zero', () {

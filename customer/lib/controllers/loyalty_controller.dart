@@ -72,13 +72,13 @@ class LoyaltyProgress {
       case 0:
         return null;
       case 1:
-        return 'لديك خدمة تنظيف سيارة مجانية';
+        return 'متاح لك تنظيف السيارة مجانًا';
       case 2:
-        return 'لديك خدمتا تنظيف سيارة مجانيتان';
+        return 'متاح لك تنظيف السيارة مجانًا مرتين';
       default:
         return available <= 10
-            ? 'لديك $available خدمات تنظيف سيارة مجانية'
-            : 'لديك $available خدمة تنظيف سيارة مجانية';
+            ? 'متاح لك تنظيف السيارة مجانًا $available مرات'
+            : 'متاح لك تنظيف السيارة مجانًا $available مرة';
     }
   }
 
