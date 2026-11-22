@@ -825,7 +825,7 @@ class _ActionBar extends StatelessWidget {
   static const _resolvedTitle = 'تمت معالجة هذه الشكوى';
   static const _buttonLabel = 'تحديد كمعالجة';
   static const _compensatedTitle = 'تمت معالجة الشكوى وتعويض العميل';
-  static const _compensateLabel = 'إعطاء تعويض';
+  static const _compensateLabel = 'تقديم تعويض';
 
   /// Colours of the compensation button and its dialog (#64).
   static const compensateColor = Color(0xFF1C63D6);
