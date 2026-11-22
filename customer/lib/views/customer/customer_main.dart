@@ -205,7 +205,7 @@ class _CustomerMainState extends State<CustomerMain>
                 ),
               ],
               title: const Text(
-                'سَيْر',
+                'سِير',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 30,
